@@ -1,0 +1,7 @@
+__pycache__
+*.swp
+input/*
+!input/.gitkeep
+output/*
+venv
+
