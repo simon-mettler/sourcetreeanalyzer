@@ -31,7 +31,9 @@ fig_files_per_level = px.line(files_per_level[current_application], x = 'release
 
 fig_avg_folder_size = px.bar(release_stats[current_application], x = 'release', y = 'avg_folder_size', title = 'avg folder size (num of files in folder)') 
 
-fig_max_tree_level = px.line(release_stats[current_application], x = 'release', y = 'max_tree_level', title = 'max tree level') 
+fig_max_tree_level = px.line(release_stats[current_application], x = 'release', y = 'max_tree_level', title = 'max tree level')
+fig_max_num_files_level = px.line(release_stats[current_application], x = 'release', y = 'max_num_files_level', title = 'max num of files per level') 
+
 
 fig_tree_width = px.line(release_stats[current_application], x = 'release', y = 'avg_num_files_level', title = '[testing] tree width? -> avg num of files per level') 
 
@@ -55,6 +57,7 @@ app.layout = html.Div(children = [
 	dcc.Graph( id='avg_folder_size', figure = fig_avg_folder_size),
 	dcc.Graph( id='files_per_level', figure = fig_files_per_level),
 	dcc.Graph( id='max_tree_level', figure = fig_max_tree_level),
+	dcc.Graph( id='max_num_files_level', figure = fig_max_num_files_level),
 	dcc.Graph( id='tree_width', figure = fig_tree_width),
 	dcc.Graph( id='tree_height', figure = fig_tree_height),
 	dcc.Graph( id='horizontal_growth', figure = fig_horizontal_growth),
