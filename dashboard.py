@@ -1,11 +1,12 @@
 from dash import Dash, html, dcc, dash_table
-import os
+import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 import folderstats
 import settings
+import os
 
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP])
 
 current_application = 'zipkin'
 
@@ -95,20 +96,32 @@ def to_kb(b):
 	kb = b/1024
 	return round(kb, 1)
 
+navbar = dbc.NavbarSimple(
+	[
+		dbc.NavItem( dbc.NavLink('About', href='#') ),
+	],
+	brand = 'SourceTreeAnalyzer',
+	brand_href = '#',
+)
 
 app.layout = html.Div(children = [
 
-	html.H1('Testing (Blender 2.2.x - 3.1.x)'),
+	navbar,
 
-	dcc.Graph( id='total_files', figure = fig_total_files),
-	dcc.Graph( id='avg_file_size', figure = fig_avg_file_size),
-	dcc.Graph( id='avg_folder_size', figure = fig_avg_folder_size),
-	dcc.Graph( id='files_per_level', figure = fig_files_per_level),
-	dcc.Graph( id='max_tree_level', figure = fig_max_tree_level),
-	dcc.Graph( id='tree_width', figure = fig_tree_width),
-	dcc.Graph( id='tree_height', figure = fig_tree_height),
-	dcc.Graph( id='horizontal_growth', figure = fig_horizontal_growth),
-	dcc.Graph( id='vertical_growth', figure = fig_vertical_growth),
+	dbc.Container(
+		[
+			html.H1('Testing (Blender 2.2.x - 3.1.x)'),
+			dcc.Graph( id='total_files', figure = fig_total_files),
+			dcc.Graph( id='avg_file_size', figure = fig_avg_file_size),
+			dcc.Graph( id='avg_folder_size', figure = fig_avg_folder_size),
+			dcc.Graph( id='files_per_level', figure = fig_files_per_level),
+			dcc.Graph( id='max_tree_level', figure = fig_max_tree_level),
+			dcc.Graph( id='tree_width', figure = fig_tree_width),
+			dcc.Graph( id='tree_height', figure = fig_tree_height),
+			dcc.Graph( id='horizontal_growth', figure = fig_horizontal_growth),
+			dcc.Graph( id='vertical_growth', figure = fig_vertical_growth),
+		]
+	),
 ])
 
 
