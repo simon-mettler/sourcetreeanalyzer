@@ -4,7 +4,7 @@ import folderstats
 import settings
 
 # Creates a dict containing applications and releases: {'application': ['release']}
-applications = {a: sorted(os.listdir(os.path.join(settings.input_dir, a))) for a in sorted(os.listdir(settings.input_dir))}
+applications = {a: sorted(os.listdir(os.path.join(settings.input_dir, a))) for a in sorted(os.listdir(settings.input_dir)) if not a.startswith('.')}
 
 # Iterate over all releases to get stats.
 for application in applications:
@@ -12,7 +12,9 @@ for application in applications:
 	release_stats = {
 		'release': [],
 		'total_folders': [],
+		#'total_source_folders': [],
 		'total_files': [],
+		'total_size': [],
 		'avg_file_size': [],
 		'avg_folder_size': [],
 		'max_tree_level': [],
@@ -38,14 +40,18 @@ for application in applications:
 		print(f"Analyzing {release}")
 
 		# Get folder structure from current release as dataframe using 'folderstats' module.
-		folder_stats = folderstats.folderstats(os.path.join(settings.input_dir, application, release), ignore_hidden = True)
-		filt = (folder_stats['folder'] == True) | (folder_stats['extension'].isin(settings.file_extensions))
-		folder_stats = folder_stats.loc[filt]
+		folder_stats = folderstats.folderstats(
+			os.path.join(settings.input_dir, application, release), 
+			ignore_hidden = True, 
+			filter_extension = settings.file_extensions
+		)
+
+		# Convert depth to level
 		folder_stats['depth'] = folder_stats['depth'] + 1
 		folder_stats.rename(columns = {'depth': 'level'}, inplace = True)
 
 		# Export to csv.
-		folder_stats.to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
+		folder_stats[['id', 'parent', 'name', 'extension', 'size', 'mtime', 'folder', 'num_files', 'level']].to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
 
 		# Average tree level.
 		levels = folder_stats.loc[ (folder_stats['folder'] == True) & (~folder_stats['id'].isin(folder_stats['parent'])) ]
@@ -57,6 +63,8 @@ for application in applications:
 		total_num_folders = folder_stats.loc[folder_stats['folder'] == True].shape[0]
 		release_stats['total_files'].append(total_num_files)
 		release_stats['total_folders'].append(total_num_folders)
+
+		release_stats['total_size'].append(folder_stats.loc[folder_stats['folder'] == True, ['size']].sum()['size'])
 
 		# Average file size in bytes.
 		release_stats['avg_file_size'].append(round(folder_stats.loc[folder_stats['folder'] == False, ['size']].mean()['size'], 2))
@@ -70,7 +78,7 @@ for application in applications:
 		# Number of files per level. 
 		fpl = folder_stats.loc[folder_stats['folder'] == False].value_counts('level').to_frame().reset_index()
 		fpl.columns = ['level', 'num_files']
-		fpl['release'] = release #* files_per_level.shape[0]
+		fpl['release'] = release
 		fpl.sort_values(by = 'level', ascending = True, inplace = True)
 		
 		files_per_level['release'] += fpl['release'].to_list()

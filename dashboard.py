@@ -7,9 +7,9 @@ import settings
 
 app = Dash(__name__)
 
-current_application = 'blender'
+current_application = 'zipkin'
 
-full_release_data = pd.read_csv('output/blender/tree_blender-2.90.0.csv')
+#full_release_data = pd.read_csv('output/zipkin/tree_1.2.1.csv')
 
 
 applications = sorted(os.listdir(settings.output_dir))
@@ -23,22 +23,72 @@ for application in applications:
 
 #print(files_per_level[current_application].groupby('release'))
 
-fig_total_files = px.bar(release_stats[current_application], x = 'release', y = 'total_files', title = 'total number of files')
-fig_avg_file_size = px.bar(release_stats[current_application], x = 'release', y = 'avg_file_size', title = 'avg file size (KB)')
+fig_total_files = px.bar(
+	release_stats[current_application], 
+	title = 'total number of files',
+	x = 'release', 
+	y = 'total_files', 
+)
+
+fig_avg_file_size = px.bar(
+	release_stats[current_application], 
+	title = 'avg file size (KB)',
+	x = 'release', 
+	y = 'avg_file_size', 
+)
 
 files_per_level[current_application]['level'] = files_per_level[current_application]['level'].astype(str)
-fig_files_per_level = px.line(files_per_level[current_application], x = 'release', y = 'num_files', color = 'level', title = 'num of files per level', markers = True)
 
-fig_avg_folder_size = px.bar(release_stats[current_application], x = 'release', y = 'avg_folder_size', title = 'avg folder size (num of files in folder)') 
+fig_files_per_level = px.line(
+	files_per_level[current_application], 
+	title = 'num of files per level', 
+	x = 'release', 
+	y = 'num_files', 
+	color = 'level', 
+	markers = True,
+)
 
-fig_max_tree_level = px.line(release_stats[current_application], x = 'release', y = 'max_tree_level', title = 'max tree level') 
+fig_avg_folder_size = px.bar(
+	release_stats[current_application], 
+	title = 'avg folder size (num of files in folder)',
+	x = 'release', 
+	y = 'avg_folder_size', 
+) 
 
-fig_tree_width = px.line(release_stats[current_application], x = 'release', y = 'avg_num_files_level', title = '[testing] tree width? -> avg num of files per level') 
+fig_max_tree_level = px.line(
+	release_stats[current_application], 
+	title = 'max tree level',
+	x = 'release', 
+	y = 'max_tree_level', 
+) 
 
-fig_tree_height = px.line(release_stats[current_application], x = 'release', y = 'avg_tree_level', title = '[testing] tree depth? -> avg depth from root to leaf folder') 
+fig_tree_width = px.line(
+	release_stats[current_application], 
+	title = '[testing] tree width? -> avg num of files per level',
+	x = 'release', 
+	y = 'avg_num_files_level',
+)
 
-fig_vertical_growth = px.bar(release_stats[current_application], x = 'release', y = 'vertical_growth', title =  '[testing] vertical growth (%)') 
-fig_horizontal_growth = px.bar(release_stats[current_application], x = 'release', y = 'horizontal_growth', title =  '[testing] horizontal growth (%)') 
+fig_tree_height = px.line(
+	release_stats[current_application], 
+	title = '[testing] tree depth? -> avg depth from root to leaf folder',
+	x = 'release', 
+	y = 'avg_tree_level', 
+)
+
+fig_vertical_growth = px.bar(
+	release_stats[current_application], 
+	title =  '[testing] vertical growth (%)',
+	x = 'release', 
+	y = 'vertical_growth', 
+)
+
+fig_horizontal_growth = px.bar(
+	release_stats[current_application], 
+	x = 'release', 
+	y = 'horizontal_growth', 
+	title =  '[testing] horizontal growth (%)'
+)
 
 
 def to_kb(b):
@@ -60,14 +110,6 @@ app.layout = html.Div(children = [
 	dcc.Graph( id='horizontal_growth', figure = fig_horizontal_growth),
 	dcc.Graph( id='vertical_growth', figure = fig_vertical_growth),
 ])
-
-
-'''
-	html.H2('Files per level'),
-	dash_table.DataTable(
-		files_per_level[current_application].head().to_dict('records')
-	),
-'''
 
 
 if __name__ == '__main__':
