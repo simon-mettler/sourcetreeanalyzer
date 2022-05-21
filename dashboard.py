@@ -1,14 +1,17 @@
 from dash import Dash, html, dcc, dash_table, callback, Input, Output
 import dash_bootstrap_components as dbc
+import dash_cytoscape as cyto
 import plotly.express as px
 import pandas as pd
 import folderstats
 import settings
 import os
-from pages import p_evolution, p_index
+from pages import p_evolution, p_index, p_release
 
+cyto.load_extra_layouts()
 
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP])
+app.config.suppress_callback_exceptions=True
 
 
 def to_kb(b):
@@ -18,14 +21,16 @@ def to_kb(b):
 
 navbar = dbc.NavbarSimple(
 	[
-		dbc.NavItem( dbc.NavLink('Release Summary', href='/evolution') ),
+		dbc.NavItem( dbc.NavLink('Evolution', href='/evolution') ),
+		dbc.NavItem( dbc.NavLink('Release', href='/release') ),
 		dbc.NavItem( dbc.NavLink('About', href='#') ),
 	],
 	brand = 'SourceTreeAnalyzer',
 	brand_href = '/'
 )
 
-app.layout = html.Div([
+
+app.layout= html.Div([
 	dcc.Location(id = 'url', refresh = False),
 	navbar,
 	html.Div(id = 'page-content')
@@ -36,8 +41,12 @@ app.layout = html.Div([
 def display_page(pathname):
 	if pathname == '/evolution':
 		return p_evolution.layout
+	elif pathname == '/release':
+		return p_release.layout
 	else:
 		return p_index.layout
+
+
 
 
 if __name__ == '__main__':
