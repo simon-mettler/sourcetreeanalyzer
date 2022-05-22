@@ -12,7 +12,7 @@ for application in applications:
 	release_stats = {
 		'release': [],
 		'total_folders': [],
-		#'total_source_folders': [],
+		'total_source_folders': [],
 		'total_files': [],
 		'total_size': [],
 		'avg_file_size': [],
@@ -30,6 +30,7 @@ for application in applications:
 		'num_files': [],
 	}
 
+	# Create output folders if not existing.
 	os.makedirs(os.path.join(settings.output_dir, application), exist_ok = True)
 
 	print(f"Started analyzing {application}")
@@ -50,7 +51,7 @@ for application in applications:
 		folder_stats['depth'] = folder_stats['depth'] + 1
 		folder_stats.rename(columns = {'depth': 'level'}, inplace = True)
 
-		# Export to csv.
+		# Export detailed release statistics to csv.
 		folder_stats[['id', 'parent', 'name', 'extension', 'size', 'mtime', 'folder', 'num_files', 'level']].to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
 
 		# Average tree level.

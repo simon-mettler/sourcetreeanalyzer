@@ -7,14 +7,14 @@ import os
 import settings
 
 
-application = 'caffeine'
-release = '3.1.0'
+application = 'zipkin'
+release = '1.0.0'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
 source_folders = release_data.loc[ release_data['folder'] == True ].astype({'id': 'string', 'parent': 'string'})
 
-node_dict = source_folders[['id', 'name']].rename(columns={'name': 'label'}).to_dict('records')
+node_dict = source_folders[['id', 'name', 'num_files']].rename(columns={'name': 'label'}).to_dict('records')
 edge_dict = source_folders[['parent', 'id']].rename(columns={'parent': 'source', 'id': 'target'}).to_dict('records')
 
 graph_elements = []
@@ -26,14 +26,12 @@ for edge in edge_dict:
 	graph_elements.append({'data': edge})
 
 graph_elements.append({'data': {'id': '0', 'label': 'root'}})
-#sourcedig = dict(source_folders)
 
 
 network_graph = cyto.Cytoscape(
 	id = 'nwgraph',
 	layout = {
 		'name': 'dagre',
-		'curve-style': 'taxi'
 	},
 	style = {'width': '1000px', 'height': '1000px'},
 	elements = graph_elements,
@@ -43,6 +41,7 @@ network_graph = cyto.Cytoscape(
 			'style': {
 				'label': 'data(label)',
 				'shape': 'rectangle',
+				'width': 'data(num_files)',
 			}
 		},
 		{
@@ -54,7 +53,8 @@ network_graph = cyto.Cytoscape(
 		{
 			'selector': 'edge',
 			'style': {
-				#'curve-style': 'taxi',
+				'width': '2px',
+				'line-color': 'rgb(219,219,219)',
 			}
 		}
 	]

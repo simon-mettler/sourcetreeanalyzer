@@ -13,6 +13,7 @@ applications = sorted(os.listdir(settings.output_dir))
 release_stats = {a:'' for a in applications }
 files_per_level = {a:'' for a in applications } 
 
+# Load statistics from output folder as dataframe.
 for application in applications:
 	release_stats[application] = pd.read_csv(os.path.join(settings.output_dir, application, 'stats_'+application+'.csv'))
 	files_per_level[application] = pd.read_csv(os.path.join(settings.output_dir, application, 'files-per-level_'+application+'.csv'))
@@ -98,8 +99,10 @@ for app in applications:
 	dropdown_options.append(single_option)
 
 
-
 def create_fig_total_files(data): 
+	"""
+	Creates bar chart showing the total number of files per release.
+	"""
 	fig = px.bar(
 		data,
 		title = 'total number of files',
@@ -120,6 +123,7 @@ app_dropdown = html.Div(
 	className = 'mb-3',
 )
 
+# Dash page layout.
 layout = dbc.Container([
 	html.H1('', id = 'testtitel'),
 	app_dropdown,
@@ -135,12 +139,17 @@ layout = dbc.Container([
 ])
 
 
+"""
+Updates title based on selected application.
+
+"""
 @callback(
 	Output('testtitel', 'children'),
 	Input('my-dropdown', 'value')
 )
 def update_selected_app(input_value):
 	return input_value
+
 
 @callback(
 	Output('total_files', 'figure'),
