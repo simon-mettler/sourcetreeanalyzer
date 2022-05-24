@@ -13,6 +13,7 @@ for application in applications:
 		'release': [],
 		'total_folders': [],
 		'total_source_folders': [],
+		#'avg_source_folders': [],
 		'total_files': [],
 		'total_size': [],
 		'avg_file_size': [],
@@ -47,12 +48,26 @@ for application in applications:
 			filter_extension = settings.file_extensions
 		)
 
+		# Count number of files in folder (used for the 'source folder size' metric), 
+		# since folder_stats['num_files'] counts all files in a folder AND its subfolders
+		num_files_in_folder = pd.DataFrame(folder_stats[folder_stats['folder'] == False].value_counts('parent').reset_index())
+		num_files_in_folder.columns = ['id', 'total_source_files']
+		folder_stats = pd.merge(folder_stats, num_files_in_folder, on = 'id', how = 'left')
+
 		# Convert depth to level
 		folder_stats['depth'] = folder_stats['depth'] + 1
-		folder_stats.rename(columns = {'depth': 'level'}, inplace = True)
+		folder_stats.rename(columns = {'depth': 'level', 'parent_x': 'parent'}, inplace = True)
 
 		# Export detailed release statistics to csv.
-		folder_stats[['id', 'parent', 'name', 'extension', 'size', 'mtime', 'folder', 'num_files', 'level']].to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
+		folder_stats.to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
+		#folder_stats[['id', 'parent', 'name', 'extension', 'size', 'mtime', 'folder', 'num_files', 'level', 'parent_x', 'parent_y', '0']].to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
+
+
+		# All source folders.
+		total_source_folders = folder_stats.loc[ folder_stats['id'].isin(folder_stats[folder_stats['folder'] == False]['parent'])]
+		release_stats['total_source_folders'].append(len(total_source_folders))
+
+
 
 		# Average tree level.
 		levels = folder_stats.loc[ (folder_stats['folder'] == True) & (~folder_stats['id'].isin(folder_stats['parent'])) ]
@@ -60,8 +75,8 @@ for application in applications:
 		release_stats['avg_tree_level'].append(avg_tree_level)
 
 		# Total number of folders and files.
-		total_num_files = folder_stats.loc[folder_stats['folder'] == False].shape[0]
-		total_num_folders = folder_stats.loc[folder_stats['folder'] == True].shape[0]
+		total_num_files = folder_stats.loc[folder_stats['folder'] == False].shape[0] 		# Total number of files.
+		total_num_folders = folder_stats.loc[folder_stats['folder'] == True].shape[0] 	# Total number of folders.
 		release_stats['total_files'].append(total_num_files)
 		release_stats['total_folders'].append(total_num_folders)
 
