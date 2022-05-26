@@ -11,13 +11,13 @@ for application in applications:
 
 	release_stats = {
 		'release': [],
-		'total_folders': [],
-		'total_source_folders': [],
-		#'avg_source_folders': [],
-		'total_files': [],
-		'total_size': [],
-		'avg_file_size': [],
-		'avg_folder_size': [],
+		'size_bytes': [],
+		'num_files': [],
+		'avg_file_size_bytes': [],
+		'num_folders': [],
+		'num_source_folders': [],
+		'avg_source_folder_size_num_files': [],
+		'avg_source_folder_size_bytes': [],
 		'max_tree_level': [],
 		'avg_tree_level': [],
 		'max_num_files_level': [],
@@ -42,57 +42,82 @@ for application in applications:
 		print(f"Analyzing {release}")
 
 		# Get folder structure from current release as dataframe using 'folderstats' module.
-		folder_stats = folderstats.folderstats(
+		fs = folderstats.folderstats(
 			os.path.join(settings.input_dir, application, release), 
 			ignore_hidden = True, 
 			filter_extension = settings.file_extensions
 		)
 
-		# Count number of files in folder (used for the 'source folder size' metric), 
-		# since folder_stats['num_files'] counts all files in a folder AND its subfolders
-		num_files_in_folder = pd.DataFrame(folder_stats[folder_stats['folder'] == False].value_counts('parent').reset_index())
-		num_files_in_folder.columns = ['id', 'total_source_files']
-		folder_stats = pd.merge(folder_stats, num_files_in_folder, on = 'id', how = 'left')
+
+		# Count number of files in folder (direct children). Used for the 'source folder size' metric).
+		# fs['num_files'] can't be used since it counts all files in a folder AND its subfolders
+		num_files_direct= pd.DataFrame(fs[fs['folder'] == False]
+			.value_counts('parent')
+			.reset_index()
+		)
+		num_files_direct.columns = ['id', 'num_files_direct']
+		fs = pd.merge(fs, num_files_direct, on = 'id', how = 'left')
+
 
 		# Convert depth to level
-		folder_stats['depth'] = folder_stats['depth'] + 1
-		folder_stats.rename(columns = {'depth': 'level', 'parent_x': 'parent'}, inplace = True)
+		fs['depth'] = fs['depth'] + 1
+
+		fs.rename(columns = {
+			'depth': 'level', 
+			'parent_x': 'parent', 
+			'size': 'size_bytes'
+		}, 
+		inplace = True)
+
 
 		# Export detailed release statistics to csv.
-		folder_stats.to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
-		#folder_stats[['id', 'parent', 'name', 'extension', 'size', 'mtime', 'folder', 'num_files', 'level', 'parent_x', 'parent_y', '0']].to_csv(os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), index = False)
+		fs[[
+			'id', 
+			'parent', 
+			'name', 
+			'extension', 
+			'size_bytes', 
+			'folder', 
+			'num_files', 
+			'num_files_direct', 
+			'level'
+		]].to_csv(
+			os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), 
+			index = False
+		)
 
 
 		# All source folders.
-		total_source_folders = folder_stats.loc[ folder_stats['id'].isin(folder_stats[folder_stats['folder'] == False]['parent'])]
-		release_stats['total_source_folders'].append(len(total_source_folders))
-
+		num_source_folders = fs.loc[ fs['id'].isin(fs[fs['folder'] == False]['parent'])]
+		release_stats['num_source_folders'].append(len(num_source_folders))
 
 
 		# Average tree level.
-		levels = folder_stats.loc[ (folder_stats['folder'] == True) & (~folder_stats['id'].isin(folder_stats['parent'])) ]
+		levels = fs.loc[ (fs['folder'] == True) & (~fs['id'].isin(fs['parent'])) ]
 		avg_tree_level = round(levels['level'].mean(), 4)
 		release_stats['avg_tree_level'].append(avg_tree_level)
 
 		# Total number of folders and files.
-		total_num_files = folder_stats.loc[folder_stats['folder'] == False].shape[0] 		# Total number of files.
-		total_num_folders = folder_stats.loc[folder_stats['folder'] == True].shape[0] 	# Total number of folders.
-		release_stats['total_files'].append(total_num_files)
-		release_stats['total_folders'].append(total_num_folders)
+		num_files = fs.loc[fs['folder'] == False].shape[0] 		# Total number of files.
+		num_folders = fs.loc[fs['folder'] == True].shape[0] 	# Total number of folders.
+		release_stats['num_files'].append(num_files)
+		release_stats['num_folders'].append(num_folders)
 
-		release_stats['total_size'].append(folder_stats.loc[folder_stats['folder'] == True, ['size']].sum()['size'])
+		size_bytes = fs.loc[fs['folder'] == True, ['size_bytes']].sum()['size_bytes']
+		release_stats['size_bytes'].append(size_bytes)
 
 		# Average file size in bytes.
-		release_stats['avg_file_size'].append(round(folder_stats.loc[folder_stats['folder'] == False, ['size']].mean()['size'], 2))
+		release_stats['avg_file_size_bytes'].append(round(fs.loc[fs['folder'] == False, ['size_bytes']].mean()['size_bytes'], 2))
 
 		# Average folder size (number of files in folder)
-		release_stats['avg_folder_size'].append(round(total_num_files / total_num_folders, 2))
+		release_stats['avg_source_folder_size_num_files'].append(round(num_files / num_source_folders.shape[0], 2))
+		release_stats['avg_source_folder_size_bytes'].append(round(size_bytes / num_source_folders.shape[0], 0))
 		
 		# Maximum tree level.
-		release_stats['max_tree_level'].append(folder_stats['level'].max())
+		release_stats['max_tree_level'].append(fs['level'].max())
 
 		# Number of files per level. 
-		fpl = folder_stats.loc[folder_stats['folder'] == False].value_counts('level').to_frame().reset_index()
+		fpl = fs.loc[fs['folder'] == False].value_counts('level').to_frame().reset_index()
 		fpl.columns = ['level', 'num_files']
 		fpl['release'] = release
 		fpl.sort_values(by = 'level', ascending = True, inplace = True)
