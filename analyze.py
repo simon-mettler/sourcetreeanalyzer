@@ -3,15 +3,22 @@ import pandas as pd
 import folderstats
 import settings
 
-# Creates a dict containing applications and releases: {'application': ['release']}
-applications = {a: sorted(os.listdir(os.path.join(settings.input_dir, a))) for a in sorted(os.listdir(settings.input_dir)) if not a.startswith('.')}
 
-# Iterate over all releases to get stats.
+# Creates a dict containing applications and releases: {'application': ['release']}
+applications = {
+	a: sorted(os.listdir(os.path.join(settings.input_dir, a))) 
+	for a in sorted(os.listdir(settings.input_dir)) if not a.startswith('.')
+}
+
+
+# Iterate over all applications to set up dicts/dataframes.
 for application in applications:
+	
+	print(f"Started analyzing {application}")
 
 	release_stats = {
 		'release': [],
-		'size_bytes': [],
+		'release_size_bytes': [],
 		'num_files': [],
 		'avg_file_size_bytes': [],
 		'num_folders': [],
@@ -31,15 +38,17 @@ for application in applications:
 		'num_files': [],
 	}
 
+
 	# Create output folders if not existing.
 	os.makedirs(os.path.join(settings.output_dir, application), exist_ok = True)
 
-	print(f"Started analyzing {application}")
 
+	# Iterate over all releases to get stats/metrics.
 	for release in applications[application]:
-		release_stats['release'].append(release)
 
 		print(f"Analyzing {release}")
+		release_stats['release'].append(release)
+
 
 		# Get folder structure from current release as dataframe using 'folderstats' module.
 		fs = folderstats.folderstats(
@@ -49,9 +58,9 @@ for application in applications:
 		)
 
 
-		# Count number of files in folder (direct children). Used for the 'source folder size' metric).
-		# fs['num_files'] can't be used since it counts all files in a folder AND its subfolders
-		num_files_direct= pd.DataFrame(fs[fs['folder'] == False]
+		# Count number of files in folder (direct children).
+		# fs['num_files'] can't be used since it counts all files in a folder AND its subfolders.
+		num_files_direct = pd.DataFrame(fs[fs['folder'] == False]
 			.value_counts('parent')
 			.reset_index()
 		)
@@ -59,7 +68,7 @@ for application in applications:
 		fs = pd.merge(fs, num_files_direct, on = 'id', how = 'left')
 
 
-		# Convert depth to level
+		# Convert tree depth to level
 		fs['depth'] = fs['depth'] + 1
 
 		fs.rename(columns = {
@@ -87,13 +96,14 @@ for application in applications:
 		)
 
 
+		# Calculate release metrics.
+
 		# All source folders.
 		num_source_folders = fs.loc[ fs['id'].isin(fs[fs['folder'] == False]['parent'])]
 		release_stats['num_source_folders'].append(len(num_source_folders))
 
-
 		# Average tree level.
-		levels = fs.loc[ (fs['folder'] == True) & (~fs['id'].isin(fs['parent'])) ]
+		levels = fs.loc[ (fs['folder'] == True) & (~fs['id'].isin(fs['parent'])) ] # Gets all leaf nodes (folders).
 		avg_tree_level = round(levels['level'].mean(), 4)
 		release_stats['avg_tree_level'].append(avg_tree_level)
 
@@ -103,18 +113,22 @@ for application in applications:
 		release_stats['num_files'].append(num_files)
 		release_stats['num_folders'].append(num_folders)
 
-		size_bytes = fs.loc[fs['folder'] == True, ['size_bytes']].sum()['size_bytes']
-		release_stats['size_bytes'].append(size_bytes)
+		# Release size in bytes.
+		release_size_bytes = fs.loc[fs['folder'] == False, ['size_bytes']].sum()['size_bytes']
+		release_stats['release_size_bytes'].append(release_size_bytes)
 
 		# Average file size in bytes.
 		release_stats['avg_file_size_bytes'].append(round(fs.loc[fs['folder'] == False, ['size_bytes']].mean()['size_bytes'], 2))
 
-		# Average folder size (number of files in folder)
+		# Average folder size (number of files in folder).
 		release_stats['avg_source_folder_size_num_files'].append(round(num_files / num_source_folders.shape[0], 2))
-		release_stats['avg_source_folder_size_bytes'].append(round(size_bytes / num_source_folders.shape[0], 0))
+
+		# Average folder size (bytes).
+		release_stats['avg_source_folder_size_bytes'].append(round(release_size_bytes / num_source_folders.shape[0], 0))
 		
 		# Maximum tree level.
 		release_stats['max_tree_level'].append(fs['level'].max())
+
 
 		# Number of files per level. 
 		fpl = fs.loc[fs['folder'] == False].value_counts('level').to_frame().reset_index()
@@ -126,26 +140,50 @@ for application in applications:
 		files_per_level['level'] += fpl['level'].to_list()
 		files_per_level['num_files'] += fpl['num_files'].to_list()
 
+		# Max number of files per level.
 		release_stats['max_num_files_level'].append(round(fpl['num_files'].max(), 2))
 
+		# Average number of files per level.
 		avg_num_files_level = round(fpl['num_files'].mean(), 2)
-		release_stats['avg_num_files_level'].append(avg_num_files_level)
 
+		release_stats['avg_num_files_level'].append(avg_num_files_level)
 		release_stats['tree_size'].append(avg_num_files_level/avg_tree_level)
 
 
+	# Convert dicts to dataframes.
 	df_release_stats = pd.DataFrame.from_dict(release_stats)
 	df_files_per_level = pd.DataFrame.from_dict(files_per_level)
 
 
-	df_release_stats['vertical_growth'] = df_release_stats['avg_tree_level'].pct_change().mul(100).round(2)
-	df_release_stats['horizontal_growth'] = df_release_stats['avg_num_files_level'].pct_change().mul(100).round(2)
+	# Calculate growth rates from different metrics.
+	def pct_growth(series):
+		return series.pct_change().mul(100).round(2)
 
-	# Export to csv.
+	df_release_stats['growth_size_bytes'] = df_release_stats['release_size_bytes'].diff()
+	df_release_stats['growth_size_bytes_pct'] = pct_growth(df_release_stats['release_size_bytes'])
+	df_release_stats['growth_num_files'] = df_release_stats['num_files'].diff()
+	df_release_stats['growth_num_files_pct'] = pct_growth(df_release_stats['num_files'])
+	df_release_stats['growth_num_source_folders'] = df_release_stats['num_source_folders'].diff()
+	df_release_stats['growth_num_source_folders_pct'] = pct_growth(df_release_stats['num_source_folders'])
+	df_release_stats['growth_avg_source_folder_size_num_files_pct'] = pct_growth(df_release_stats['avg_source_folder_size_num_files'])
+	df_release_stats['growth_avg_source_folder_size_bytes'] = df_release_stats['avg_source_folder_size_bytes'].diff()
+	df_release_stats['growth_avg_source_folder_size_bytes_pct'] = pct_growth(df_release_stats['avg_source_folder_size_bytes'])
+	df_release_stats['growth_max_tree_level'] = df_release_stats['max_tree_level'].diff()
+	df_release_stats['growth_max_tree_level_pct'] = pct_growth(df_release_stats['max_tree_level'])
+	df_release_stats['growth_avg_tree_level_pct'] = pct_growth(df_release_stats['avg_tree_level'])
+	df_release_stats['growth_max_num_files_level'] = df_release_stats['max_num_files_level'].diff()
+	df_release_stats['growth_max_num_files_level_pct'] = pct_growth(df_release_stats['max_num_files_level'])
+	df_release_stats['growth_avg_num_files_level_pct'] = pct_growth(df_release_stats['avg_num_files_level'])
+	df_release_stats['growth_tree_depth_pct'] = pct_growth(df_release_stats['avg_tree_level'])
+	df_release_stats['growth_tree_width_pct'] = pct_growth(df_release_stats['avg_num_files_level'])
+
+
+	# Export results to csv.
 	df_release_stats.to_csv(os.path.join(settings.output_dir, application, 'stats_' + application + '.csv'), index = False)
-	df_files_per_level.to_csv(os.path.join(settings.output_dir, application, 'files-per-level_' + application + '.csv'))
+	df_files_per_level.to_csv(os.path.join(settings.output_dir, application, 'files-per-level_' + application + '.csv'), index = False)
+
 
 	print(f"Exported {application} results to csv")
 
-	#print('-' * 60)
+
 print("Done...")
