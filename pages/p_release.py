@@ -14,7 +14,7 @@ release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_
 
 source_folders = release_data.loc[ release_data['folder'] == True ].astype({'id': 'string', 'parent': 'string'})
 
-node_dict = source_folders[['id', 'name', 'num_files']].rename(columns={'name': 'label'}).to_dict('records')
+node_dict = source_folders[['id', 'name', 'num_files_direct']].fillna(1).rename(columns={'name': 'label'}).to_dict('records')
 edge_dict = source_folders[['parent', 'id']].rename(columns={'parent': 'source', 'id': 'target'}).to_dict('records')
 
 graph_elements = []
@@ -41,7 +41,7 @@ network_graph = cyto.Cytoscape(
 			'style': {
 				'label': 'data(label)',
 				'shape': 'rectangle',
-				'width': 'data(num_files)',
+				'width': 'data(num_files_direct)',
 			}
 		},
 		{

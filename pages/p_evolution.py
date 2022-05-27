@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import settings
 
-current_application = 'caffeine'
+current_application = 'skywalking'
 
 applications = sorted(os.listdir(settings.output_dir))
 
@@ -32,9 +32,9 @@ fig_total_files = px.bar(
 
 fig_avg_file_size = px.bar(
 	release_stats[current_application], 
-	title = 'avg file size (KB)',
+	title = 'avg file size (Bytes)',
 	x = 'release', 
-	y = 'avg_file_size', 
+	y = 'avg_file_size_bytes', 
 )
 
 files_per_level[current_application]['level'] = files_per_level[current_application]['level'].astype(str)
@@ -52,7 +52,7 @@ fig_avg_folder_size = px.bar(
 	release_stats[current_application], 
 	title = 'avg folder size (num of files in folder)',
 	x = 'release', 
-	y = 'avg_folder_size', 
+	y = 'avg_source_folder_size_num_files', 
 ) 
 
 fig_max_tree_level = px.line(
@@ -78,16 +78,16 @@ fig_tree_height = px.line(
 
 fig_vertical_growth = px.bar(
 	release_stats[current_application], 
-	title =  '[testing] vertical growth (%)',
+	title =  '[testing] tree depth growth (%)',
 	x = 'release', 
-	y = 'vertical_growth', 
+	y = 'growth_tree_depth_pct', 
 )
 
 fig_horizontal_growth = px.bar(
 	release_stats[current_application], 
+	title =  '[testing] tree width growth (%)',
 	x = 'release', 
-	y = 'horizontal_growth', 
-	title =  '[testing] horizontal growth (%)'
+	y = 'growth_tree_width_pct', 
 )
 
 dropdown_options = [] 
@@ -100,14 +100,12 @@ for app in applications:
 
 
 def create_fig_total_files(data): 
-	"""
-	Creates bar chart showing the total number of files per release.
-	"""
+	# Creates bar chart showing the total number of files per release.
 	fig = px.bar(
 		data,
 		title = 'total number of files',
 		x = 'release', 
-		y = 'total_files', 
+		y = 'num_files', 
 	)
 	return fig
 
@@ -156,5 +154,11 @@ def update_selected_app(input_value):
 	Input('my-dropdown', 'value')
 )
 def update_figure(selected_value):
-	data = release_stats[selected_value]
-	return create_fig_total_files(data)
+	if selected_value:
+		data = release_stats[selected_value]
+		return create_fig_total_files(data)
+	else:
+		return px.bar(
+			[],
+			title = 'Please select an application...'
+		)
