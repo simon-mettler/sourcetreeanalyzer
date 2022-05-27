@@ -38,15 +38,10 @@ fig_avg_file_size = px.bar(
 )
 
 files_per_level[current_application]['level'] = files_per_level[current_application]['level'].astype(str)
+files_per_level[current_application]['release'] = files_per_level[current_application]['release'].astype(str)
+#files_per_level[current_application].set_index('release', inplace = True)
+#print(files_per_level[current_application])
 
-fig_files_per_level = px.line(
-	files_per_level[current_application], 
-	title = 'num of files per level', 
-	x = 'release', 
-	y = 'num_files', 
-	color = 'level', 
-	markers = True,
-)
 
 fig_avg_folder_size = px.bar(
 	release_stats[current_application], 
@@ -90,6 +85,11 @@ fig_horizontal_growth = px.bar(
 	y = 'growth_tree_width_pct', 
 )
 
+
+# Page elements
+
+
+# Create dropdown allowing users to select a application.
 dropdown_options = [] 
 for app in applications:
 	single_option = {
@@ -98,67 +98,86 @@ for app in applications:
 	}
 	dropdown_options.append(single_option)
 
-
-def create_fig_total_files(data): 
-	# Creates bar chart showing the total number of files per release.
-	fig = px.bar(
-		data,
-		title = 'total number of files',
-		x = 'release', 
-		y = 'num_files', 
-	)
-	return fig
-
 app_dropdown = html.Div(
 	[
 		dbc.Label('Select Application', html_for='dropdown'),
 		dcc.Dropdown(
-			id = 'my-dropdown',
+			id = 'dropdown_application',
 			options = dropdown_options,
-			value = 'zipkin',
 		),
 	],
 	className = 'mb-3',
 )
 
+
+# Figures
+
+def create_fig_total_files(data): 
+	fig = px.bar(
+		data,
+		title = 'Total number of files',
+		x = 'release', 
+		y = 'num_files', 
+	)
+	return fig
+
+
+def create_fig_files_per_level(data):
+	fig = px.line(
+		data,
+		title = 'Number of files per level', 
+		x = 'release', 
+		y = 'num_files', 
+		color = 'level', 
+		markers = True,
+	)
+
+	# Reset category order after grouping.
+	unique_releases = data['release'].unique().tolist()
+	fig.update_xaxes(categoryorder = 'array', categoryarray = unique_releases) 
+	
+	return fig
+
+
+# Callbacks
+
+# Updates title based on selected application.
+@callback(
+	Output('page-title', 'children'),
+	Input('dropdown_application', 'value')
+)
+def update_selected_app(input_value):
+	return input_value
+
+
+# Updates figures based on selected application.
+@callback(
+	Output('fig-total-files', 'figure'),
+	Output('fig-files-per-level', 'figure'),
+	Input('dropdown_application', 'value')
+)
+def update_figure(selected_value):
+	if selected_value:
+		data_release = release_stats[selected_value]
+		data_fpl = files_per_level[selected_value]
+		return create_fig_total_files(data_release), create_fig_files_per_level(data_fpl)
+	else:
+		data = pd.DataFrame.from_dict({'release': [], 'num_files': [], 'level': []})
+		return create_fig_total_files(data), create_fig_files_per_level(data)
+
+
+
 # Dash page layout.
 layout = dbc.Container([
-	html.H1('', id = 'testtitel'),
+	html.H1('', id = 'page-title'),
 	app_dropdown,
-	dcc.Graph( id='total_files' ),
+	dcc.Graph( id='fig-total-files' ),
+	dcc.Graph( id='fig-files-per-level'), 
 	dcc.Graph( id='avg_file_size', figure = fig_avg_file_size),
 	dcc.Graph( id='avg_folder_size', figure = fig_avg_folder_size),
-	dcc.Graph( id='files_per_level', figure = fig_files_per_level),
 	dcc.Graph( id='max_tree_level', figure = fig_max_tree_level),
 	dcc.Graph( id='tree_width', figure = fig_tree_width),
 	dcc.Graph( id='tree_height', figure = fig_tree_height),
 	dcc.Graph( id='horizontal_growth', figure = fig_horizontal_growth),
 	dcc.Graph( id='vertical_growth', figure = fig_vertical_growth),
 ])
-
-
-"""
-Updates title based on selected application.
-
-"""
-@callback(
-	Output('testtitel', 'children'),
-	Input('my-dropdown', 'value')
-)
-def update_selected_app(input_value):
-	return input_value
-
-
-@callback(
-	Output('total_files', 'figure'),
-	Input('my-dropdown', 'value')
-)
-def update_figure(selected_value):
-	if selected_value:
-		data = release_stats[selected_value]
-		return create_fig_total_files(data)
-	else:
-		return px.bar(
-			[],
-			title = 'Please select an application...'
-		)
