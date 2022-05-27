@@ -54,6 +54,7 @@ for application in applications:
 		fs = folderstats.folderstats(
 			os.path.join(settings.input_dir, application, release), 
 			ignore_hidden = True, 
+			exclude = settings.exclude,
 			filter_extension = settings.file_extensions
 		)
 
