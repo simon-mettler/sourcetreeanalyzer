@@ -5,15 +5,13 @@ import pandas as pd
 import os
 import settings
 
-current_application = 'skywalking'
 
+# Load statistics from output folder as dataframe.
 applications = sorted(os.listdir(settings.output_dir))
-
 
 release_stats = {a:'' for a in applications }
 files_per_level = {a:'' for a in applications } 
 
-# Load statistics from output folder as dataframe.
 for application in applications:
 	release_stats[application] = pd.read_csv(
 		os.path.join(settings.output_dir, application, 'stats_'+application+'.csv'))
@@ -21,31 +19,23 @@ for application in applications:
 		os.path.join(settings.output_dir, application, 'files-per-level_'+application+'.csv'))
 
 
-files_per_level[current_application]['level'] = files_per_level[current_application]['level'].astype(str)
-files_per_level[current_application]['release'] = files_per_level[current_application]['release'].astype(str)
-#files_per_level[current_application].set_index('release', inplace = True)
-#print(files_per_level[current_application])
-
-
-
 # Page elements
 
 # Application Dropdown
-# Allows users to select a application.
-dropdown_options = [] 
+app_dropdown_options = [] 
 for app in applications:
 	single_option = {
 		"label": app,
 		"value": app
 	}
-	dropdown_options.append(single_option)
+	app_dropdown_options.append(single_option)
 
 app_dropdown = html.Div(
 	[
 		dbc.Label('Application', html_for='dropdown'),
 		dcc.Dropdown(
 			id = 'dropdown_application',
-			options = dropdown_options,
+			options = app_dropdown_options,
 		),
 	],
 	className = 'mb-3',
@@ -139,7 +129,7 @@ def create_fig_max_tree_level(data):
 # Updates title based on selected application.
 @callback(
 	Output('page-title', 'children'),
-	Input('dropdown_application', 'value')
+	Input('dropdown_application', 'value'),
 )
 def update_selected_app(input_value):
 	if input_value:
@@ -155,7 +145,8 @@ def update_selected_app(input_value):
 	Output('fig-avg-file-size-bytes', 'figure'),
 	Output('fig-avg-folder-size', 'figure'),
 	Output('fig-max-tree-level', 'figure'),
-	Input('dropdown_application', 'value')
+	Input('dropdown_application', 'value'), 
+	prevent_initial_call = True
 )
 def update_figure(selected_value):
 	if selected_value:
@@ -167,15 +158,6 @@ def update_figure(selected_value):
 			create_fig_avg_file_size_bytes(data_release),
 			create_fig_avg_folder_size(data_release),
 			create_fig_max_tree_level(data_release),
-		)
-	else:
-		data = pd.DataFrame.from_dict({'release': [], 'num_files': [], 'level': [], 'avg_file_size_bytes': [], 'avg_source_folder_size_num_files': [], 'max_tree_level': []})
-		return (
-			create_fig_total_files(data), 
-			create_fig_files_per_level(data),
-			create_fig_avg_file_size_bytes(data),
-			create_fig_avg_folder_size(data),
-			create_fig_max_tree_level(data),
 		)
 
 
