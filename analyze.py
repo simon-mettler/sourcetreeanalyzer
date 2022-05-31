@@ -2,6 +2,9 @@ import os
 import pandas as pd
 import folderstats
 import settings
+import pathlib
+import hashlib
+import base64
 
 
 # Creates a dict containing applications and releases: {'application': ['release']}
@@ -54,6 +57,7 @@ for application in applications:
 		fs = folderstats.folderstats(
 			os.path.join(settings.input_dir, application, release), 
 			ignore_hidden = True, 
+			hash_name = 'md5',
 			exclude = settings.exclude,
 			filter_extension = settings.file_extensions
 		)
@@ -72,6 +76,23 @@ for application in applications:
 		# Convert tree depth to level
 		fs['depth'] = fs['depth'] + 1
 
+
+		# Start path at root release folder.
+		def cut_path(p):
+			path = pathlib.Path(p)
+			return path.relative_to(*path.parts[:3])
+
+		fs['path'] = fs['path'].apply(cut_path)
+
+		# Create hash from path.
+		def hash_path(p):
+			hash_value = hashlib.md5(str(p).encode('utf-8')).hexdigest()
+			return hash_value
+
+		fs['hash_id'] = fs['path'].apply(hash_path)
+
+
+		# Rename columns
 		fs.rename(columns = {
 			'depth': 'level', 
 			'parent_x': 'parent', 
@@ -84,6 +105,8 @@ for application in applications:
 		fs[[
 			'id', 
 			'parent', 
+			'path',
+			'hash_id',
 			'name', 
 			'extension', 
 			'size_bytes', 
