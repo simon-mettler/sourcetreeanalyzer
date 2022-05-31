@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import settings
 from base64 import b64encode
+from urllib.parse import quote
 
 
 applications = sorted(os.listdir(settings.output_dir))
@@ -51,23 +52,25 @@ release_dropdown_group = html.Div(
 	className = 'mb-3',
 )
 
-application = 'zipkin'
-release = '1.0.0'
+application = 'skywalking'
+release = '2.1-2017'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
-source_folders = release_data.loc[release_data['folder'] == True].astype({'id': 'string', 'parent': 'string'})
+source_folders = release_data.loc[release_data['folder'] == True].astype({'hash_id': 'string', 'hash_parent': 'string'})
+
 
 node_dict = (
-	source_folders[['id', 'name', 'num_files_direct']]
-	.fillna(1)
-	.rename(columns={'name': 'label'})
+	source_folders[['hash_id', 'name']]
+	#.fillna('0')
+	.rename(columns={'hash_id': 'id', 'name': 'label'})
 	.to_dict('records')
 )
 
+
 edge_dict = (
-	source_folders[['parent', 'id']]
-	.rename(columns={'parent': 'source', 'id': 'target'})
+	source_folders.iloc[:-1][['hash_parent', 'hash_id']]
+	.rename(columns={'hash_parent': 'source', 'hash_id': 'target'})
 	.to_dict('records')
 )
 
@@ -79,7 +82,7 @@ for node in node_dict:
 for edge in edge_dict:
 	graph_elements.append({'data': edge})
 
-graph_elements.append({'data': {'id': '0', 'label': 'root'}})
+#graph_elements.append({'data': {'id': '0', 'label': 'root'}})
 
 
 network_graph = cyto.Cytoscape(
@@ -96,7 +99,6 @@ network_graph = cyto.Cytoscape(
 			'style': {
 				'label': 'data(label)',
 				'shape': 'rectangle',
-				'width': 'data(num_files_direct)',
 			}
 		},
 		{
@@ -130,19 +132,18 @@ def update_folder_tree(app, release):
 """
 
 
-
 netbartest = px.bar(
 	x=[20, 14, 23],
 	y=['a', 'b', 'c'],
 	orientation='h'
 )
-def datauri():
-	img_bytes = netbartest.to_image(format='png')
-	encoding = b64encode(img_bytes).decode()
-	datauri = "data:image/png;base64," + encoding
-	return datauri
 
-print(datauri())
+
+def datauri():
+	img_svg = netbartest.to_image(format='svg').decode()
+	img_svg2 = quote(img_svg)
+	datauri = "data:image/svg+xml;utf8," + img_svg2
+	return datauri
 
 nettest = cyto.Cytoscape(
 
@@ -172,14 +173,12 @@ nettest = cyto.Cytoscape(
 )
 
 
-
-
 layout = dbc.Container([
 	html.H1('', id = 'testtitel'),
 	dcc.Graph(id='test', figure=netbartest),
 	html.Div([nettest]),
-	app_dropdown,
-	release_dropdown_group,
-	submit_button,
-	dcc.Graph(id='folder-tree-graph' ),
+	#app_dropdown,
+	#release_dropdown_group,
+	#submit_button,
+	html.Div(network_graph)
 ])
