@@ -90,23 +90,30 @@ for application in applications:
 			return hash_value
 
 		fs['hash_id'] = fs['path'].apply(hash_path)
+		
+
+		fs = pd.merge(fs, fs[['hash_id', 'id']], left_on = 'parent', right_on = 'id', how = 'left')
+
+		fs.drop(columns='id_y', inplace=True)
 
 
 		# Rename columns
 		fs.rename(columns = {
 			'depth': 'level', 
 			'parent_x': 'parent', 
+			'id_x': 'id',
+			'hash_id_y': 'hash_parent',
+			'hash_id_x': 'hash_id',
 			'size': 'size_bytes'
 		}, 
 		inplace = True)
 
-
 		# Export detailed release statistics to csv.
 		fs[[
-			'id', 
-			'parent', 
-			'path',
+			#'id', 
 			'hash_id',
+			#'parent', 
+			'hash_parent',
 			'name', 
 			'extension', 
 			'size_bytes', 
