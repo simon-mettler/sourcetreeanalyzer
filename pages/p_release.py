@@ -57,32 +57,52 @@ release = '2.1-2017'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
+release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_6.0.0-alpha.csv'))
+release_data_01 = release_data_01.loc[release_data_01['folder'] == True]
+release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_8.8.0.csv'))
+release_data_02 = release_data_01.loc[release_data_02['folder'] == True]
+
+merged = pd.merge(release_data_01, release_data_02, on = ['hash_id', 'hash_parent', 'name'], how = 'outer').fillna(0)
+
+#merged.assign(**{'name_x': merged['name_x'].fillna(merged['name_y'])})
+#mergednew = merged.assign(**{'name_x': merged['name_x'].mask(lambda x: x == 'NaN', merged['name_y'])})
+
+merged.to_csv(os.path.join(settings.output_dir, application, 'temp_' + application + '.csv'), index = False)
+
 source_folders = release_data.loc[release_data['folder'] == True].astype({'hash_id': 'string', 'hash_parent': 'string'})
 
-
-node_dict = (
-	source_folders[['hash_id', 'name']]
-	#.fillna('0')
-	.rename(columns={'hash_id': 'id', 'name': 'label'})
-	.to_dict('records')
-)
+def datauri():
+	img_svg = netbartest.to_image(format='svg').decode()
+	img_svg2 = quote(img_svg)
+	datauri = "data:image/svg+xml;utf8," + img_svg2
+	return datauri
 
 
-edge_dict = (
-	source_folders.iloc[:-1][['hash_parent', 'hash_id']]
-	.rename(columns={'hash_parent': 'source', 'hash_id': 'target'})
-	.to_dict('records')
-)
+def graph_elements(source_folders):
 
-# Create nodes and edges.
-graph_elements = []
+	node_dict = (
+		source_folders[['hash_id', 'name']]
+		#.fillna('0').
+		.rename(columns={'hash_id': 'id', 'name': 'label'})
+		.to_dict('records')
+	)
 
-for node in node_dict:
-	graph_elements.append({'data': node})
-for edge in edge_dict:
-	graph_elements.append({'data': edge})
+	edge_dict = (
+		source_folders.iloc[:-1][['hash_parent', 'hash_id']]
+		.rename(columns={'hash_parent': 'source', 'hash_id': 'target'})
+		.to_dict('records')
+	)
 
-#graph_elements.append({'data': {'id': '0', 'label': 'root'}})
+	# Create nodes and edges.
+	graph_elements = []
+
+	for node in node_dict:
+		graph_elements.append({'data': node})
+	for edge in edge_dict:
+		graph_elements.append({'data': edge})
+	
+	return graph_elements
+
 
 
 network_graph = cyto.Cytoscape(
@@ -92,7 +112,7 @@ network_graph = cyto.Cytoscape(
 		#'name': 'breadthfirst',
 	},
 	style = {'width': '1000px', 'height': '1000px'},
-	elements = graph_elements,
+	elements = graph_elements(merged),
 	stylesheet = [
 		{
 			'selector': 'node',
@@ -132,18 +152,23 @@ def update_folder_tree(app, release):
 """
 
 
+
+
+
+
+
+
+
+
+
+
+
 netbartest = px.bar(
 	x=[20, 14, 23],
 	y=['a', 'b', 'c'],
 	orientation='h'
 )
 
-
-def datauri():
-	img_svg = netbartest.to_image(format='svg').decode()
-	img_svg2 = quote(img_svg)
-	datauri = "data:image/svg+xml;utf8," + img_svg2
-	return datauri
 
 nettest = cyto.Cytoscape(
 
