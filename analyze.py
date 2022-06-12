@@ -94,14 +94,15 @@ for application in applications:
 
 		fs = pd.merge(fs, fs[['hash_id', 'id']], left_on = 'parent', right_on = 'id', how = 'left')
 
-		fs.drop(columns='id_y', inplace=True)
+		fs.drop(columns=['id_y','id_x'], inplace=True)
+		print(fs.columns)
 
 
 		# Rename columns
 		fs.rename(columns = {
 			'depth': 'level', 
 			'parent_x': 'parent', 
-			'id_x': 'id',
+			#'id_x': 'id',
 			'hash_id_y': 'hash_parent',
 			'hash_id_x': 'hash_id',
 			'size': 'size_bytes'

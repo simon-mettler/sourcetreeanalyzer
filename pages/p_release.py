@@ -73,25 +73,43 @@ merged.to_csv(os.path.join(settings.output_dir, application, 'temp_' + applicati
 
 source_folders = release_data.loc[release_data['folder'] == True].astype({'hash_id': 'string', 'hash_parent': 'string'})
 
-def create_node_chart(val_1, val_2):
-	if(val_1 != val_1 and val_2 != val_2):
-		return "data:image/svg+xml;utf8,%253csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%20width%3D%2732%27%20height%3D%2732%27%253e%253cpath%20fill%3D%27%2523ddd%27%20d%3D%27m0%200h16v32h16V16H0z%27%20/%253e%253c/svg%253e"
-	#return "data:image/svg+xml;utf8,"
-	else:
+
+def create_node_chart(val_1, val_2, range_max):
+
+	if(val_1 > 0 or val_2 > 0):
+
+		"""
+		chart = px.funnel_area(names=['a', 'b'], values=[4,6])
+		"""
 		chart = px.bar(
 			x=[val_1, val_2],
 			y=['1', '2'],
-			orientation='h'
+			orientation='h',
+			color=["red", "goldenrod"], color_discrete_map="identity"
 		)
+		chart.update_xaxes(range = [0, range_max])
+		chart.update_layout(
+			plot_bgcolor = 'rgb(222,222,222)',
+			paper_bgcolor = 'rgb(222,222,222)',
+			bargap = 0,
+		)
+		#chart.layout.update(showlegend=False)
+		chart.update_xaxes(visible=False)
 
-	img_svg = chart.to_image(format='svg').decode()
 
-	img_svg2 = quote(img_svg)
-	datauri = "data:image/svg+xml;utf8," + img_svg2
-	return datauri
+		img_svg = chart.to_image(format='svg').decode()
+
+		img_svg2 = quote(img_svg)
+		datauri = "data:image/svg+xml;utf8," + img_svg2
+		return datauri
+	else:
+
+		return "data:image/svg+xml;utf8,"
+	#return "data:image/svg+xml;utf8,%253csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%20width%3D%2732%27%20height%3D%2732%27%253e%253cpath%20fill%3D%27%2523ddd%27%20d%3D%27m0%200h16v32h16V16H0z%27%20/%253e%253c/svg%253e"
 
 
 def graph_elements(source_folders):
+
 	max_num_files_direct = source_folders[['num_files_direct_x', 'num_files_direct_y']].max().max()
 
 	node_dict = (
@@ -112,7 +130,7 @@ def graph_elements(source_folders):
 	graph_elements = []
 
 	for node in node_dict:
-		uri = create_node_chart(node['num_files_direct_x'], node['num_files_direct_y'])
+		uri = create_node_chart(node['num_files_direct_x'], node['num_files_direct_y'], max_num_files_direct)
 		node['uri'] = uri
 		graph_elements.append({'data': node})
 	for edge in edge_dict:
@@ -129,7 +147,7 @@ network_graph = cyto.Cytoscape(
 		'name': 'dagre',
 		#'name': 'breadthfirst',
 	},
-	style = {'width': '1000px', 'height': '1000px'},
+	style = {'width': '100%', 'height': '1000px'},
 	elements = graph_elements(merged),
 	stylesheet = [
 		{
@@ -140,6 +158,7 @@ network_graph = cyto.Cytoscape(
 				'shape': 'rectangle',
 				'background-image': 'data(uri)',
 				'background-fit': 'cover',
+				'background-color': 'rgb(222,222,222)',
 			}
 		},
 		{
