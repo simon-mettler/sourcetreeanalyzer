@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, dash_table, callback, Input, Output
+from dash import Dash, html, dcc, dash_table, callback, Input, Output, State
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
@@ -11,9 +11,10 @@ from urllib.parse import quote
 
 applications = sorted(os.listdir(settings.output_dir))
 
+
 # Page elements
 
-# Application Dropdown
+# Application dropdown.
 app_dropdown_options = [] 
 
 for app in applications:
@@ -25,104 +26,48 @@ for app in applications:
 
 app_dropdown = html.Div(
 	[
-		dbc.Label('Application', html_for='dropdown'),
+		dbc.Label('Application', html_for='dropdown-application'),
 		dcc.Dropdown(
-			id = 'dropdown_application',
+			id = 'dropdown-application',
 			options = app_dropdown_options,
 		),
 	],
 	className = 'mb-3',
 )
 
-
-# Release dropdown group
-release_dropdown_group = html.Div(
+# Release dropdown.
+release_dropdown = html.Div(
 	[
-		dbc.Label('Release 1', html_for='dropdown_release1'),
+		dbc.Label('Release', html_for='dropdown-release'),
 		dcc.Dropdown(
-			id = 'dropdown_release1',
-			options = app_dropdown_options,
-		),
-		dbc.Label('Release 2', html_for='dropdown_release2'),
-		dcc.Dropdown(
-			id = 'dropdown_release2',
-			options = app_dropdown_options,
+			id = 'dropdown-release',
+			options = [],
 		),
 	],
 	className = 'mb-3',
 )
 
-application = 'flask'
-release = '0.3.0'
-
-release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
-
-release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_0.3.0.csv'))
-#release_data_01 = release_data_01.iloc[:-1][release_data_01['folder'] == True]
-release_data_01 = release_data_01.loc[release_data_01['folder'] == True]
-release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_1.0.3.csv'))
-#release_data_02 = release_data_02.iloc[:-1][release_data_02['folder'] == True]
-release_data_02 = release_data_02.loc[release_data_02['folder'] == True]
-
-merged = pd.merge(release_data_01, release_data_02, on = ['hash_id', 'hash_parent', 'name'], how = 'outer')#.fillna(0)
-
-#merged.assign(**{'name_x': merged['name_x'].fillna(merged['name_y'])})
-#mergednew = merged.assign(**{'name_x': merged['name_x'].mask(lambda x: x == 'NaN', merged['name_y'])})
-
-merged.to_csv(os.path.join(settings.output_dir, application, 'temp_' + application + '.csv'), index = False)
-
-source_folders = release_data.loc[release_data['folder'] == True].astype({'hash_id': 'string', 'hash_parent': 'string'})
 
 
-def create_node_chart(val_1, val_2, range_max):
-
-	if(val_1 > 0 or val_2 > 0):
-
-		"""
-		chart = px.funnel_area(names=['a', 'b'], values=[4,6])
-		"""
-		chart = px.bar(
-			x=[val_1, val_2],
-			y=['1', '2'],
-			orientation='h',
-			color=["red", "goldenrod"], color_discrete_map="identity"
-		)
-		chart.update_xaxes(range = [0, range_max])
-		chart.update_layout(
-			plot_bgcolor = 'rgb(222,222,222)',
-			paper_bgcolor = 'rgb(222,222,222)',
-			bargap = 0,
-		)
-		#chart.layout.update(showlegend=False)
-		chart.update_xaxes(visible=False)
+submit_button = dbc.Button(
+	'Submit', id='submit-button', n_clicks = 0
+)
 
 
-		img_svg = chart.to_image(format='svg').decode()
-
-		img_svg2 = quote(img_svg)
-		datauri = "data:image/svg+xml;utf8," + img_svg2
-		return datauri
-	else:
-
-		return "data:image/svg+xml;utf8,"
-	#return "data:image/svg+xml;utf8,%253csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%20width%3D%2732%27%20height%3D%2732%27%253e%253cpath%20fill%3D%27%2523ddd%27%20d%3D%27m0%200h16v32h16V16H0z%27%20/%253e%253c/svg%253e"
 
 
 def graph_elements(source_folders):
 
-	max_num_files_direct = source_folders[['num_files_direct_x', 'num_files_direct_y']].max().max()
-
 	node_dict = (
-		source_folders[['hash_id', 'name', 'num_files_direct_x', 'num_files_direct_y']]
-		#.fillna('0')
-		.rename(columns={'hash_id': 'id', 'name': 'label'})
+		source_folders[['id', 'name']]
+		.fillna('0')
+		.rename(columns={'name': 'label'})
 		.to_dict('records')
 	)
 
 	edge_dict = (
-			#source_folders.iloc[:-1][['hash_parent', 'hash_id']]
-		source_folders[['hash_parent', 'hash_id']]
-		.rename(columns={'hash_parent': 'source', 'hash_id': 'target'})
+		source_folders.iloc[:-1][['parent', 'id']]
+		.rename(columns={'parent': 'source', 'id': 'target'})
 		.to_dict('records')
 	)
 
@@ -130,113 +75,87 @@ def graph_elements(source_folders):
 	graph_elements = []
 
 	for node in node_dict:
-		uri = create_node_chart(node['num_files_direct_x'], node['num_files_direct_y'], max_num_files_direct)
-		node['uri'] = uri
 		graph_elements.append({'data': node})
 	for edge in edge_dict:
 		graph_elements.append({'data': edge})
-		#print(edge)
 	
 	return graph_elements
 
 
-
-network_graph = cyto.Cytoscape(
-	id = 'nwgraph',
-	layout = {
-		'name': 'dagre',
-		#'name': 'breadthfirst',
-	},
-	style = {'width': '100%', 'height': '1000px'},
-	elements = graph_elements(merged),
-	stylesheet = [
-		{
-			'selector': 'node',
-			'style': {
-				'label': 'data(label)',
-				#'label': 'data(label)',
-				'shape': 'rectangle',
-				'background-image': 'data(uri)',
-				'background-fit': 'cover',
-				'background-color': 'rgb(222,222,222)',
-			}
+def create_network_graph(source_folders):
+	fig = cyto.Cytoscape(
+		layout = {
+			'name': 'dagre',
 		},
-		{
-			'selector': 'node:selected',
-			'style': {
-				'background-color': 'red',
+		style = {'width': '100%', 'height': '1000px'},
+		elements = graph_elements(source_folders),
+		stylesheet = [
+			{
+				'selector': 'node',
+				'style': {
+					'label': 'data(label)',
+					'shape': 'rectangle',
+					'background-color': 'rgb(222,222,222)',
+				}
+			},
+			{
+				'selector': 'node:selected',
+				'style': {
+					'background-color': 'red',
+				}
+			},
+			{
+				'selector': 'edge',
+				'style': {
+					'width': '2px',
+					'line-color': 'rgb(219,219,219)',
+				}
 			}
-		},
-		{
-			'selector': 'edge',
-			'style': {
-				'width': '2px',
-				'line-color': 'rgb(219,219,219)',
-			}
-		}
-	]
-)
+		]
+	)
+	return fig 
 
-submit_button = dbc.Button(
-	'Submit', id='submit-button', n_clicks = 0
-)
 
-"""
+# Update release dropdown options based on selected application.
 @callback(
-	Output('folder-tree-graph', 'figure'),
+	Output('dropdown-release', 'options'),
+	Input('dropdown-application', 'value'),
+	prevent_initial_call = True
+)
+def update_release_options(app):
+	print('1 callback')
+	releases = pd.read_csv(os.path.join(settings.output_dir, app, 'stats_'+app+'.csv'))
+	releases = releases['release'].unique().tolist()
+	release_dropdown_options = []
+
+	for release in releases:
+		single_option = {
+			"label": release,
+			"value": release 
+		}
+		release_dropdown_options.append(single_option)
+
+	return release_dropdown_options
+
+
+@callback(
+	Output('network-graph', 'children'),
 	Input('submit-button', 'n_clicks'),
-	State('dropdown_application', 'value')
-	State('dropdown_release', 'value')
+	State('dropdown-application', 'value'),
+	State('dropdown-release', 'value'),
+	prevent_initial_call = True
 )
-def update_folder_tree(app, release):
-"""
-
-netbartest = px.bar(
-	x=[20, 14, 23],
-	y=['a', 'b', 'c'],
-	orientation='h'
-)
-
-def datauri():
-	img_svg = netbartest.to_image(format='svg').decode()
-	img_svg2 = quote(img_svg)
-	datauri = "data:image/svg+xml;utf8," + img_svg2
-	return datauri
-
-nettest = cyto.Cytoscape(
-
-	id = 'nettest',
-	layout = {
-		'name': 'dagre',
-		#'name': 'breadthfirst',
-	},
-	style = {'width': '1000px', 'height': '1000px'},
-	elements =[
-		{'data': {'id': 'A', 'uri': datauri()}},
-		{'data': {'id': 'B', 'uri': datauri()}},
-    {'data': {'source': 'A', 'target': 'B'}},
-	],
-	stylesheet = [
-		{
-			'selector': 'node',
-			'style': {
-				#'label': 'data(label)',
-				'shape': 'rectangle',
-				'background-image': 'data(uri)',
-				#'width': 'data(num_files_direct)',
-				'background-fit': 'cover',
-			}
-		},
-	]
-)
+def update_graph(n_clicks, app, release):
+	print(app, release)
+	release_data = pd.read_csv(os.path.join(settings.output_dir, app, 'tree_'+release+'.csv'))
+	source_folders = release_data.loc[release_data['folder'] == True].astype({'id': 'string', 'parent': 'string'})
+	return create_network_graph(source_folders)
 
 
 layout = dbc.Container([
 	html.H1('', id = 'testtitel'),
-	#dcc.Graph(id='test', figure=netbartest),
-	#html.Div([nettest]),
-	#app_dropdown,
-	#release_dropdown_group,
-	#submit_button,
-	html.Div(network_graph)
+	app_dropdown,
+	release_dropdown,
+	submit_button,
+	html.Div('', id = 'network-graph')
 ])

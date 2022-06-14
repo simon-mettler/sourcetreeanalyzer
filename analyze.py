@@ -94,39 +94,26 @@ for application in applications:
 
 		fs = pd.merge(fs, fs[['hash_id', 'id']], left_on = 'parent', right_on = 'id', how = 'left')
 
-		fs.drop(columns=['id_y','id_x'], inplace=True)
-		print(fs.columns)
+		# Delete unused columns.
+		fs.drop(columns=['id_y','id_x', 'parent', 'uid', 'ctime', 'atime',  'path'], inplace=True)
 
 
 		# Rename columns
 		fs.rename(columns = {
 			'depth': 'level', 
-			'parent_x': 'parent', 
+			#'parent_x': 'parent', 
 			#'id_x': 'id',
-			'hash_id_y': 'hash_parent',
-			'hash_id_x': 'hash_id',
+			'hash_id_y': 'parent',
+			'hash_id_x': 'id',
 			'size': 'size_bytes'
 		}, 
 		inplace = True)
 
 		# Export detailed release statistics to csv.
-		fs[[
-			#'id', 
-			'hash_id',
-			#'parent', 
-			'hash_parent',
-			'name', 
-			'extension', 
-			'size_bytes', 
-			'folder', 
-			'num_files', 
-			'num_files_direct', 
-			'level'
-		]].to_csv(
+		fs.to_csv(
 			os.path.join(settings.output_dir, application, 'tree_' + release + '.csv'), 
 			index = False
 		)
-
 
 		# Calculate release metrics.
 

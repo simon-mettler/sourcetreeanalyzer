@@ -6,7 +6,7 @@ import pandas as pd
 import folderstats
 import settings
 import os
-from pages import p_evolution, p_index, p_release
+from pages import p_evolution, p_index, p_release # p_release2, p_map
 
 cyto.load_extra_layouts()
 
@@ -43,6 +43,10 @@ def display_page(pathname):
 		return p_evolution.layout
 	elif pathname == '/release':
 		return p_release.layout
+	#elif pathname == '/release2':
+		#return p_release2.layout
+	#elif pathname == '/map':
+		#return p_map.layout
 	else:
 		return p_index.layout
 
