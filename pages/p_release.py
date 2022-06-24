@@ -11,7 +11,6 @@ from urllib.parse import quote
 
 applications = sorted(os.listdir(settings.output_dir))
 
-
 # Page elements
 
 # Application dropdown.
@@ -52,7 +51,6 @@ release_dropdown = html.Div(
 submit_button = dbc.Button(
 	'Submit', id='submit-button', n_clicks = 0
 )
-
 
 
 

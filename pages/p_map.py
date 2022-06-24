@@ -34,7 +34,7 @@ app_dropdown = html.Div(
 	className = 'mb-3',
 )
 
-application = 'pandas'
+application = 'qbittorrent'
 dfs = []
 matrix = []
 
@@ -48,7 +48,8 @@ for file in prefixed:
 
 matrixdf = reduce(lambda df1,df2: pd.merge(df1,df2,on=['id', 'level'], how = 'outer'), dfs)
 
-matrixdff = matrixdf.iloc[:,2:-1].fillna(0).sort_values(by='level').values.tolist()
+matrixdff = matrixdf.iloc[:,2:-1].fillna(0).values.tolist()
+#matrixdff = matrixdf.iloc[:,2:-1].fillna(0).sort_values(by='level').values.tolist()
 map_graph = px.imshow(matrixdff, aspect='auto')
 
 #release = '0.2.0'

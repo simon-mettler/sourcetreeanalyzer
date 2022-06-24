@@ -21,6 +21,7 @@ for application in applications:
 
 	release_stats = {
 		'release': [],
+		'mtime': [],
 		'release_size_bytes': [],
 		'num_files': [],
 		'max_file_size_bytes': [],
@@ -125,6 +126,7 @@ for application in applications:
 
 
 		# Calculate release metrics.
+		release_stats['mtime'].append(fs.iloc[0]['mtime'])
 
 		# Total number of source folders.
 		num_source_folders = fs.loc[ fs['id'].isin(fs[fs['folder'] == False]['parent'])]
@@ -206,6 +208,7 @@ for application in applications:
 
 	# Convert dicts to dataframes.
 	df_release_stats = pd.DataFrame.from_dict(release_stats)
+	df_release_stats.sort_values(by = 'mtime', inplace = True)
 	df_level_stats = pd.DataFrame.from_dict(level_stats)
 
 

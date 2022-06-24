@@ -71,7 +71,7 @@ merged = pd.merge(release_data_01, release_data_02, on = ['id', 'parent', 'name'
 source_folders = release_data.loc[release_data['folder'] == True].astype({'id': 'string', 'parent': 'string'})
 
 
-def create_node_chart(val_1, val_2):
+def create_node_chart(val_1, val_2, range_max):
 
 	if(val_1 > 0 or val_2 > 0):
 
@@ -79,8 +79,8 @@ def create_node_chart(val_1, val_2):
 		chart = px.funnel_area(names=['a', 'b'], values=[4,6])
 		"""
 		chart = px.bar(
-			x=[val_1, val_2],
-			y=['1', '2'],
+			x=[val_2, val_1],
+			y=['2', '1'],
 			orientation='h',
 			color=["red", "goldenrod"], color_discrete_map="identity"
 		)
@@ -104,7 +104,7 @@ def create_node_chart(val_1, val_2):
 
 def graph_elements(source_folders):
 
-	#max_num_files_direct = source_folders[['num_files_direct_x', 'num_files_direct_y']].max().max()
+	max_num_files = source_folders[['num_files_x', 'num_files_y']].max().max()
 
 	node_dict = (
 		source_folders[['id', 'name', 'num_files_x', 'num_files_y']]
@@ -124,7 +124,7 @@ def graph_elements(source_folders):
 	graph_elements = []
 
 	for node in node_dict:
-		uri = create_node_chart(node['num_files_x'], node['num_files_y'])
+		uri = create_node_chart(node['num_files_x'], node['num_files_y'], max_num_files)
 		node['uri'] = uri
 		graph_elements.append({'data': node})
 	for edge in edge_dict:
@@ -151,7 +151,7 @@ network_graph = cyto.Cytoscape(
 				#'label': 'data(label)',
 				'shape': 'rectangle',
 				'background-image': 'data(uri)',
-				'background-fit': 'cover',
+				'background-fit': 'contain',
 				'background-color': 'rgb(222,222,222)',
 			}
 		},

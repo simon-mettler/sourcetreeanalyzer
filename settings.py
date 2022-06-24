@@ -2,19 +2,26 @@ input_dir = 'input'
 
 output_dir = 'output'
 
+order_by_name = [
+	'aseprite', 
+	'caffeine',
+	'godot',
+]
+
 file_extensions = [
 	'py', 
 	'java', 
 	'h', 
 	'c', 
 	'cc',
-	'cpp'
+	'cpp',
 ]
 
 exclude = [
 	'androidTest', 
 	'animated-base-test', # fresco
-	'asv-bench' # pandas
+	'asv_bench', # pandas
+	'bench',
 	'benchmarks', 
 	'cmake', 
 	'demo',
