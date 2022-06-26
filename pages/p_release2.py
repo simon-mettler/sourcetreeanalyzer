@@ -52,15 +52,16 @@ release_dropdown_group = html.Div(
 	className = 'mb-3',
 )
 
-application = 'pandas'
-release = '0.3.0'
+application = 'skywalking'
+release = '5.0.0-alpha'
+mode = 'num_files_direct'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
-release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_0.25.3.csv'))
+release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.2.6.csv'))
 #release_data_01 = release_data_01.iloc[:-1][release_data_01['folder'] == True]
 release_data_01 = release_data_01.loc[release_data_01['folder'] == True]
-release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_0.3.0.csv'))
+release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_5.0.0-alpha.csv'))
 #release_data_02 = release_data_02.iloc[:-1][release_data_02['folder'] == True]
 release_data_02 = release_data_02.loc[release_data_02['folder'] == True]
 
@@ -84,7 +85,7 @@ def create_node_chart(val_1, val_2, range_max):
 			orientation='h',
 			color=["red", "goldenrod"], color_discrete_map="identity"
 		)
-		#chart.update_xaxes(range = [0, range_max])
+		chart.update_xaxes(range = [0, range_max])
 		chart.update_layout(
 			plot_bgcolor = 'rgb(222,222,222)',
 			paper_bgcolor = 'rgb(222,222,222)',
@@ -104,10 +105,10 @@ def create_node_chart(val_1, val_2, range_max):
 
 def graph_elements(source_folders):
 
-	max_num_files = source_folders[['num_files_x', 'num_files_y']].max().max()
+	max_num_files = source_folders[[mode + '_x', mode + '_y']].max().max()
 
 	node_dict = (
-		source_folders[['id', 'name', 'num_files_x', 'num_files_y']]
+		source_folders[['id', 'name', mode+'_x', mode+'_y']]
 		#.fillna('0')
 		.rename(columns={'name': 'label'})
 		.to_dict('records')
@@ -124,7 +125,7 @@ def graph_elements(source_folders):
 	graph_elements = []
 
 	for node in node_dict:
-		uri = create_node_chart(node['num_files_x'], node['num_files_y'], max_num_files)
+		uri = create_node_chart(node[mode+'_x'], node[mode + '_y'], max_num_files)
 		node['uri'] = uri
 		graph_elements.append({'data': node})
 	for edge in edge_dict:

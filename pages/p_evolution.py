@@ -12,11 +12,6 @@ applications = sorted(os.listdir(settings.output_dir))
 release_stats = {a:'' for a in applications }
 files_per_level = {a:'' for a in applications } 
 
-app_stats_dict = {
-	'app': [],
-	'num_files_first': [],
-	'num_files_last': [],
-}
 
 for application in applications:
 
@@ -31,25 +26,6 @@ for application in applications:
 
 	release_stats[application] = df
 
-	app_stats_dict['app'].append(application)
-	app_stats_dict['num_files_first'].append(df.iloc[0]['num_files'])
-	app_stats_dict['num_files_last'].append(df.iloc[-1]['num_files'])
-
-
-app_stats_df = pd.DataFrame.from_dict(app_stats_dict)
-
-tabletest = dash_table.DataTable(
-	app_stats_df.to_dict('records'),
-	style_as_list_view=True,
-	style_data_conditional=[
-		{
-			'if': {'row_index': 'odd'},
-			'backgroundColor': 'rgb(220, 220, 220)',
-		}
-	],
-)
-
-print(app_stats_df)
 
 # Stats
 
@@ -79,12 +55,19 @@ app_dropdown = html.Div(
 	className = 'mb-3',
 )
 
+
+config_graph = {
+	'displaylogo': False,
+	'toImageButtonOptions': {'format': 'svg'},
+}
+
 def create_fig_test(data): 
 	fig = px.bar(
 		data,
 		title = 'test',
 		x = 'release', 
 		y = 'growth_num_files_pct', 
+		template = 'simple_white',
 		labels = {
 			'release': 'Release',
 			'growth_num_files_pct': 'Metric',
@@ -98,6 +81,7 @@ def create_fig_release_size_bytes(data):
 		title = 'Release Size (Bytes)',
 		x = 'release', 
 		y = 'release_size_bytes', 
+		template = 'none',
 		labels = {
 			'release': 'Release',
 			'release_size_bytes': 'Size (Bytes)',
@@ -113,6 +97,7 @@ def create_fig_total_files(data):
 		title = 'Total number of files',
 		x = 'release', 
 		y = 'num_files', 
+		template = 'simple_white',
 		labels = {
 			'release': 'Release',
 			'num_files': 'Number of files',
@@ -248,9 +233,8 @@ def update_figure(selected_value):
 # Dash page layout.
 layout = dbc.Container([
 	html.H1('', id = 'page-title'),
-	tabletest,
 	app_dropdown,
-	dcc.Graph(id='fig-total-files'),
+	dcc.Graph(id='fig-total-files', config=config_graph),
 	html.Div(dbc.Accordion([
 		dbc.AccordionItem([
 			dcc.Graph(id='fig-test'),

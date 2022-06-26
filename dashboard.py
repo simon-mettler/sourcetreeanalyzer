@@ -6,7 +6,7 @@ import pandas as pd
 import folderstats
 import settings
 import os
-from pages import p_evolution, p_index, p_release, p_release2#, p_map
+from pages import p_evolution, p_index, p_release, p_datatable#, p_release2
 
 cyto.load_extra_layouts()
 
@@ -23,6 +23,7 @@ navbar = dbc.NavbarSimple(
 	[
 		dbc.NavItem( dbc.NavLink('Evolution', href='/evolution') ),
 		dbc.NavItem( dbc.NavLink('Release', href='/release') ),
+		dbc.NavItem( dbc.NavLink('Datatable', href='/datatable') ),
 		dbc.NavItem( dbc.NavLink('About', href='#') ),
 	],
 	brand = 'SourceTreeAnalyzer',
@@ -43,10 +44,10 @@ def display_page(pathname):
 		return p_evolution.layout
 	elif pathname == '/release':
 		return p_release.layout
-	elif pathname == '/release2':
-		return p_release2.layout
-	#elif pathname == '/map':
-		#return p_map.layout
+	#elif pathname == '/release2':
+		#return p_release2.layout
+	elif pathname == '/datatable':
+		return p_datatable.layout
 	else:
 		return p_index.layout
 
