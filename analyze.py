@@ -43,6 +43,7 @@ for application in applications:
 
 	level_stats = {
 		'release': [],
+		'mtime': [],
 		'level': [],
 		'num_files': [],
 		'num_folders': [],
@@ -127,6 +128,7 @@ for application in applications:
 
 		# Calculate release metrics.
 		release_stats['mtime'].append(fs.iloc[0]['mtime'])
+		mtime = fs.iloc[0]['mtime']
 
 		# Total number of source folders.
 		num_source_folders = fs.loc[ fs['id'].isin(fs[fs['folder'] == False]['parent'])]
@@ -178,6 +180,7 @@ for application in applications:
 		# Number of files and folders per level. 
 		files = fs.loc[fs['folder'] == False].value_counts('level').to_frame().reset_index()
 		files.columns = ['level', 'num_files']
+		files['mtime']= mtime
 		files['release'] = release
 
 		folders = fs.loc[fs['folder'] == True].value_counts('level').to_frame().reset_index()
@@ -186,8 +189,9 @@ for application in applications:
 
 		files_folders = pd.merge(folders, files, on=['level', 'release'], how = 'outer')
 		files_folders.sort_values(by = 'level', ascending = True, inplace = True)
-		
+
 		level_stats['release'] += files_folders['release'].to_list()
+		level_stats['mtime'] += files_folders['mtime'].to_list()
 		level_stats['level'] += files_folders['level'].to_list()
 		level_stats['num_files'] += files_folders['num_files'].to_list()
 		level_stats['num_folders'] += files_folders['num_folders'].to_list()
