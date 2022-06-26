@@ -6,6 +6,9 @@ order_by_name = [
 	'aseprite', 
 	'caffeine',
 	'godot',
+	'qbittorrent',
+	'tesseract',
+	'imgui',
 ]
 
 file_extensions = [

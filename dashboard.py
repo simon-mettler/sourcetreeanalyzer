@@ -14,10 +14,6 @@ app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP])
 app.config.suppress_callback_exceptions=True
 
 
-def to_kb(b):
-	kb = b/1024
-	return round(kb, 1)
-
 
 navbar = dbc.NavbarSimple(
 	[

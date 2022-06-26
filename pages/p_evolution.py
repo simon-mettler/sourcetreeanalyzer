@@ -18,13 +18,14 @@ for application in applications:
 	files_per_level[application] = pd.read_csv(
 		os.path.join(settings.output_dir, application, 'files-per-level_'+application+'.csv'))
 
-	df = pd.read_csv(
+	stats = pd.read_csv(
 		os.path.join(settings.output_dir, application, 'stats_'+application+'.csv'))
 
 	if application in settings.order_by_name:
-		df.sort_values(by = 'release', inplace = True)
+		stats.sort_values(by = 'release', inplace = True)
 
-	release_stats[application] = df
+
+	release_stats[application] = stats
 
 
 # Stats
@@ -58,7 +59,7 @@ app_dropdown = html.Div(
 
 config_graph = {
 	'displaylogo': False,
-	'toImageButtonOptions': {'format': 'svg'},
+	'toImageButtonOptions': {'format': 'png'},
 }
 
 def create_fig_test(data): 
@@ -73,6 +74,7 @@ def create_fig_test(data):
 			'growth_num_files_pct': 'Metric',
 		},
 	)
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
 def create_fig_release_size_bytes(data): 
@@ -87,8 +89,8 @@ def create_fig_release_size_bytes(data):
 			'release_size_bytes': 'Size (Bytes)',
 		},
 	)
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
-
 
 
 def create_fig_total_files(data): 
@@ -97,16 +99,25 @@ def create_fig_total_files(data):
 		title = 'Total number of files',
 		x = 'release', 
 		y = 'num_files', 
-		template = 'simple_white',
+		template = 'none',
 		labels = {
 			'release': 'Release',
 			'num_files': 'Number of files',
 		},
 	)
+
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
+
 	return fig
 
 
-def create_fig_files_per_level(data):
+def create_fig_files_per_level(data, application):
+	if application not in settings.order_by_name:
+		# Sorting values by mtime to ensure correct xaxis ordering because 
+		# plotly falls back to alphabetical ordering after grouping
+		data.sort_values(by = 'mtime', inplace = True)
+		data = data.reset_index(drop=True)
+
 	fig = px.line(
 		data,
 		title = 'Number of files per level', 
@@ -114,6 +125,8 @@ def create_fig_files_per_level(data):
 		y = 'num_files', 
 		color = 'level', 
 		markers = True,
+		template = 'none',
+		category_orders={'index': data.index[::-1]}, # Reorder xaxis.
 		labels = {
 			'release': 'Release',
 			'num_files': 'Number of files',
@@ -121,13 +134,11 @@ def create_fig_files_per_level(data):
 		},
 	)
 
-	# Set category order after grouping.
-	unique_releases = data['release'].unique().tolist()
-	fig.update_xaxes(
-		categoryorder = 'array', 
-		categoryarray = unique_releases, 
-		range = [0, len(data['release'].unique())-1]
-	) 
+	# Update xaxis range to remove left and right chart padding.
+	fig.update_xaxes( range = [0, len(data['release'].unique())-1]	) 
+	fig.update_traces(connectgaps=False)
+
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	
 	return fig
 
@@ -138,11 +149,13 @@ def create_fig_avg_file_size_bytes(data):
 		title = 'Average file size in Bytes',
 		x = 'release', 
 		y = 'avg_file_size_bytes', 
+		template = 'none',
 		labels = {
 			'release': 'Release',
 			'avg_file_size_bytes': 'Avg. file size',
 		},
 	)
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
 def create_fig_max_file_size_bytes(data):
@@ -156,6 +169,7 @@ def create_fig_max_file_size_bytes(data):
 			'max_file_size_bytes': 'Max. file size',
 		},
 	)
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
 def create_fig_avg_folder_size(data):
@@ -169,6 +183,7 @@ def create_fig_avg_folder_size(data):
 			'avg_source_folder_size_num_files': 'Avg. folder size (num. of files in folder)',
 		},
 	) 
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
 def create_fig_max_tree_level(data):
@@ -182,6 +197,7 @@ def create_fig_max_tree_level(data):
 			'max_tree_level': 'Maximum tree level',
 		},
 	) 
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
 
@@ -217,11 +233,12 @@ def update_figure(selected_value):
 	if selected_value:
 		data_release = release_stats[selected_value]
 		data_fpl = files_per_level[selected_value]
+		release_list = release_stats[selected_value]['release'].tolist()
 		return (
 			create_fig_total_files(data_release), 
 			#create_fig_metric_source_folder(data_release), 
 			#create_fig_tree_size(data_release), 
-			create_fig_files_per_level(data_fpl), 
+			create_fig_files_per_level(data_fpl, selected_value), 
 			create_fig_release_size_bytes(data_release), 
 			create_fig_avg_file_size_bytes(data_release),
 			create_fig_test(data_release),
