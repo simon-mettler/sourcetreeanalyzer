@@ -23,6 +23,7 @@ for application in applications:
 
 	if application in settings.order_by_name:
 		stats.sort_values(by = 'release', inplace = True)
+		stats = stats.reset_index(drop=True)
 
 
 	release_stats[application] = stats
@@ -124,7 +125,7 @@ def create_fig_files_per_level(data, application):
 		x = 'release', 
 		y = 'num_files', 
 		color = 'level', 
-		markers = True,
+		#markers = True,
 		template = 'none',
 		category_orders={'index': data.index[::-1]}, # Reorder xaxis.
 		labels = {
@@ -135,10 +136,9 @@ def create_fig_files_per_level(data, application):
 	)
 
 	# Update xaxis range to remove left and right chart padding.
+	fig.update_xaxes(type='category')
 	fig.update_xaxes( range = [0, len(data['release'].unique())-1]	) 
 	fig.update_traces(connectgaps=False)
-
-	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	
 	return fig
 

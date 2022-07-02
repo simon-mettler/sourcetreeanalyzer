@@ -185,9 +185,10 @@ for application in applications:
 
 		folders = fs.loc[fs['folder'] == True].value_counts('level').to_frame().reset_index()
 		folders.columns = ['level', 'num_folders']
+		folders['mtime']= mtime
 		folders['release'] = release
 
-		files_folders = pd.merge(folders, files, on=['level', 'release'], how = 'outer')
+		files_folders = pd.merge(folders, files, on=['level', 'release', 'mtime'], how = 'outer')
 		files_folders.sort_values(by = 'level', ascending = True, inplace = True)
 
 		level_stats['release'] += files_folders['release'].to_list()

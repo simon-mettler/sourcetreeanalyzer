@@ -18,6 +18,7 @@ app_stats_dict = {
 	'num_files_last': [],
 	'avg_file_size_kb_last': [],
 	'release_size_kb_last': [],
+	#'max_level': [],
 }
 
 for application in applications:

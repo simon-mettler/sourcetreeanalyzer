@@ -3,7 +3,6 @@ input_dir = 'input'
 output_dir = 'output'
 
 order_by_name = [
-	'aseprite', 
 	'caffeine',
 	'godot',
 	'qbittorrent',
