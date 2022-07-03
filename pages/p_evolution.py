@@ -6,6 +6,10 @@ import os
 import settings
 
 
+def to_kb(b):
+	kb = b/1024
+	return round(kb, 0)
+
 # Load statistics from output folder as dataframe.
 applications = sorted(os.listdir(settings.output_dir))
 
@@ -27,6 +31,7 @@ for application in applications:
 
 
 	release_stats[application] = stats
+	release_stats[application]['release_size_bytes'] = release_stats[application]['release_size_bytes'].apply(to_kb)
 
 
 # Stats
@@ -63,7 +68,7 @@ config_graph = {
 	'toImageButtonOptions': {'format': 'png'},
 }
 
-def create_fig_test(data): 
+def create_fig_growth_num_files(data): 
 	fig = px.bar(
 		data,
 		title = 'test',
@@ -78,6 +83,21 @@ def create_fig_test(data):
 	fig.update_layout({ 'xaxis': {'type': 'category'}})
 	return fig
 
+def create_fig_growth_release_size(data): 
+	fig = px.bar(
+		data,
+		title = 'test',
+		x = 'release', 
+		y = 'growth_size_bytes_pct', 
+		template = 'simple_white',
+		labels = {
+			'release': 'Release',
+			'growth_size_bytes_pct': 'Size',
+		},
+	)
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
+	return fig
+
 def create_fig_release_size_bytes(data): 
 	fig = px.line(
 		data,
@@ -87,7 +107,7 @@ def create_fig_release_size_bytes(data):
 		template = 'none',
 		labels = {
 			'release': 'Release',
-			'release_size_bytes': 'Size (Bytes)',
+			'release_size_bytes': 'Size (KB)',
 		},
 	)
 	fig.update_layout({ 'xaxis': {'type': 'category'}})
@@ -218,12 +238,13 @@ def update_selected_app(input_value):
 # Updates figures based on selected application.
 @callback(
 	Output('fig-total-files', 'figure'),
+	Output('fig-growth-num-files', 'figure'),
 	Output('fig-release-size-bytes', 'figure'),
 	#Output('fig-tree-size', 'figure'),
 	#Output('fig-metric-source-folder', 'figure'),
-	Output('fig-files-per-level', 'figure'),
+	Output('fig-growth-release-size', 'figure'),
 	Output('fig-avg-file-size-bytes', 'figure'),
-	Output('fig-test', 'figure'),
+	Output('fig-files-per-level', 'figure'),
 	Output('fig-avg-folder-size', 'figure'),
 	Output('fig-max-tree-level', 'figure'),
 	Input('dropdown_application', 'value'), 
@@ -236,12 +257,13 @@ def update_figure(selected_value):
 		release_list = release_stats[selected_value]['release'].tolist()
 		return (
 			create_fig_total_files(data_release), 
+			create_fig_growth_num_files(data_release),
 			#create_fig_metric_source_folder(data_release), 
 			#create_fig_tree_size(data_release), 
-			create_fig_files_per_level(data_fpl, selected_value), 
 			create_fig_release_size_bytes(data_release), 
+			create_fig_growth_release_size(data_release),
+			create_fig_files_per_level(data_fpl, selected_value), 
 			create_fig_avg_file_size_bytes(data_release),
-			create_fig_test(data_release),
 			create_fig_avg_folder_size(data_release),
 			create_fig_max_tree_level(data_release),
 		)
@@ -254,13 +276,18 @@ layout = dbc.Container([
 	dcc.Graph(id='fig-total-files', config=config_graph),
 	html.Div(dbc.Accordion([
 		dbc.AccordionItem([
-			dcc.Graph(id='fig-test'),
+			dcc.Graph(id='fig-growth-num-files'),
 		], title='Show Growth')
 	],start_collapsed=True)),
 	#dcc.Graph(id='fig-metric-source-folder'),
 	#dcc.Graph(id='fig-tree-size'),
-	dcc.Graph(id='fig-files-per-level'), 
 	dcc.Graph(id='fig-release-size-bytes'), 
+	html.Div(dbc.Accordion([
+		dbc.AccordionItem([
+			dcc.Graph(id='fig-growth-release-size'),
+		], title='Show Growth')
+	],start_collapsed=True)),
+	dcc.Graph(id='fig-files-per-level'), 
 	dcc.Graph(id='fig-avg-file-size-bytes'),
 	dcc.Graph(id='fig-avg-folder-size'),
 	dcc.Graph(id='fig-max-tree-level')
