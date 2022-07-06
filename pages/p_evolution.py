@@ -1,5 +1,7 @@
 from dash import Dash, html, dcc, dash_table, callback, Input, Output
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
 import pandas as pd
 import os
@@ -32,6 +34,7 @@ for application in applications:
 
 	release_stats[application] = stats
 	release_stats[application]['release_size_bytes'] = release_stats[application]['release_size_bytes'].apply(to_kb)
+	#release_stats[application]['avg_file_size_bytes'] = release_stats[application]['avg_file_size_bytes'].apply(to_kb)
 
 
 # Stats
@@ -63,17 +66,50 @@ app_dropdown = html.Div(
 )
 
 
+
+
+
+
+
+### Create Graphs
+
+# Global configs.
 config_graph = {
 	'displaylogo': False,
 	'toImageButtonOptions': {'format': 'png'},
 }
+
+
+def create_fig_size_multiple_yaxis(data):
+	fig = make_subplots(specs=[[{"secondary_y": True}]])
+	fig.add_trace(
+    go.Scatter(
+			x = data['release'], 
+			y = data['num_files'],
+			name="Num. Files"),
+    secondary_y=False,
+	)
+
+	fig.add_trace(
+    go.Scatter(
+			x = data['release'], 
+			y = data['release_size_bytes'],
+    	name="KB"),
+    secondary_y=True,
+	)
+	fig.update_layout(template='none')
+	fig.update_layout({ 'xaxis': {'type': 'category'}})
+
+	return fig
+
 
 def create_fig_growth_num_files(data): 
 	fig = px.bar(
 		data,
 		title = 'test',
 		x = 'release', 
-		y = 'growth_num_files_pct', 
+		y = ['growth_num_files_pct', 'growth_size_bytes_pct'],
+		barmode='group',
 		template = 'simple_white',
 		labels = {
 			'release': 'Release',
@@ -237,6 +273,7 @@ def update_selected_app(input_value):
 
 # Updates figures based on selected application.
 @callback(
+	Output('fig-size-multipe-yaxis', 'figure'),
 	Output('fig-total-files', 'figure'),
 	Output('fig-growth-num-files', 'figure'),
 	Output('fig-release-size-bytes', 'figure'),
@@ -256,6 +293,7 @@ def update_figure(selected_value):
 		data_fpl = files_per_level[selected_value]
 		release_list = release_stats[selected_value]['release'].tolist()
 		return (
+			create_fig_size_multiple_yaxis(data_release), 
 			create_fig_total_files(data_release), 
 			create_fig_growth_num_files(data_release),
 			#create_fig_metric_source_folder(data_release), 
@@ -273,6 +311,7 @@ def update_figure(selected_value):
 layout = dbc.Container([
 	html.H1('', id = 'page-title'),
 	app_dropdown,
+	dcc.Graph(id='fig-size-multipe-yaxis'), 
 	dcc.Graph(id='fig-total-files', config=config_graph),
 	html.Div(dbc.Accordion([
 		dbc.AccordionItem([

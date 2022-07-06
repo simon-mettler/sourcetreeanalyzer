@@ -52,16 +52,16 @@ release_dropdown_group = html.Div(
 	className = 'mb-3',
 )
 
-application = 'skywalking'
-release = '5.0.0-alpha'
+application = 'dbeaver'
+release = '3.6.10'
 mode = 'num_files_direct'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
-release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.2.6.csv'))
+release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.6.10.csv'))
 #release_data_01 = release_data_01.iloc[:-1][release_data_01['folder'] == True]
 release_data_01 = release_data_01.loc[release_data_01['folder'] == True]
-release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_5.0.0-alpha.csv'))
+release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.8.5.csv'))
 #release_data_02 = release_data_02.iloc[:-1][release_data_02['folder'] == True]
 release_data_02 = release_data_02.loc[release_data_02['folder'] == True]
 
@@ -85,7 +85,7 @@ def create_node_chart(val_1, val_2, range_max):
 			orientation='h',
 			color=["red", "goldenrod"], color_discrete_map="identity"
 		)
-		chart.update_xaxes(range = [0, range_max])
+		#chart.update_xaxes(range = [0, range_max])
 		chart.update_layout(
 			plot_bgcolor = 'rgb(222,222,222)',
 			paper_bgcolor = 'rgb(222,222,222)',
@@ -128,6 +128,7 @@ def graph_elements(source_folders):
 		uri = create_node_chart(node[mode+'_x'], node[mode + '_y'], max_num_files)
 		node['uri'] = uri
 		graph_elements.append({'data': node})
+		print('create node')
 	for edge in edge_dict:
 		graph_elements.append({'data': edge})
 		#print(edge)
