@@ -5,7 +5,7 @@ output_dir = 'output'
 order_by_name = [
 	'caffeine',
 	'godot',
-	'qbittorrent',
+	#'qbittorrent',
 	'tesseract',
 	'imgui',
 ]

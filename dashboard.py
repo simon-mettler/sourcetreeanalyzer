@@ -6,7 +6,7 @@ import pandas as pd
 import folderstats
 import settings
 import os
-from pages import p_evolution, p_index, p_release, p_datatable #, p_release2
+from pages import p_evolution, p_index, p_release, p_datatable#, p_release2
 
 cyto.load_extra_layouts()
 

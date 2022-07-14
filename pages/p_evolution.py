@@ -151,7 +151,7 @@ def create_fig_release_size_bytes(data):
 
 
 def create_fig_total_files(data): 
-	fig = px.bar(
+	fig = px.line(
 		data,
 		title = 'Total number of files',
 		x = 'release', 
@@ -234,6 +234,7 @@ def create_fig_avg_folder_size(data):
 		title = 'Average source folder size (number of files in folder)',
 		x = 'release', 
 		y = 'avg_source_folder_size_num_files', 
+		template = 'none',
 		labels = {
 			'release': 'Release',
 			'avg_source_folder_size_num_files': 'Avg. folder size (num. of files in folder)',

@@ -52,16 +52,16 @@ release_dropdown_group = html.Div(
 	className = 'mb-3',
 )
 
-application = 'dbeaver'
-release = '3.6.10'
-mode = 'num_files_direct'
+application = 'calibre'
+release = '3.0.0'
+mode = 'num_files'
 
 release_data = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_'+release+'.csv'))
 
-release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.6.10.csv'))
+release_data_01 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_2.85.1.csv'))
 #release_data_01 = release_data_01.iloc[:-1][release_data_01['folder'] == True]
 release_data_01 = release_data_01.loc[release_data_01['folder'] == True]
-release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.8.5.csv'))
+release_data_02 = pd.read_csv(os.path.join(settings.output_dir, application, 'tree_3.0.0.csv'))
 #release_data_02 = release_data_02.iloc[:-1][release_data_02['folder'] == True]
 release_data_02 = release_data_02.loc[release_data_02['folder'] == True]
 

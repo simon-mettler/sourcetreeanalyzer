@@ -54,11 +54,12 @@ submit_button = dbc.Button(
 
 
 
+
 def graph_elements(source_folders):
 
 	node_dict = (
-		source_folders[['id', 'name']]
-		.fillna('0')
+		source_folders[['id', 'name', 'num_files_direct']]#.astype(str)
+		.fillna(0)
 		.rename(columns={'name': 'label'})
 		.to_dict('records')
 	)
@@ -81,6 +82,9 @@ def graph_elements(source_folders):
 
 
 def create_network_graph(source_folders):
+
+	num_files_max = source_folders['num_files_direct'].max()
+
 	fig = cyto.Cytoscape(
 		layout = {
 			'name': 'dagre',
@@ -93,7 +97,9 @@ def create_network_graph(source_folders):
 				'style': {
 					'label': 'data(label)',
 					'shape': 'rectangle',
-					'background-color': 'rgb(222,222,222)',
+					'border-width': '1px',
+					'border-color': 'black',
+					'background-color': f"mapData(num_files_direct, 0, {num_files_max}, white, red)",
 				}
 			},
 			{
@@ -121,7 +127,6 @@ def create_network_graph(source_folders):
 	prevent_initial_call = True
 )
 def update_release_options(app):
-	print('1 callback')
 	releases = pd.read_csv(os.path.join(settings.output_dir, app, 'stats_'+app+'.csv'))
 	releases = releases['release'].unique().tolist()
 	release_dropdown_options = []
@@ -144,7 +149,6 @@ def update_release_options(app):
 	prevent_initial_call = True
 )
 def update_graph(n_clicks, app, release):
-	print(app, release)
 	release_data = pd.read_csv(os.path.join(settings.output_dir, app, 'tree_'+release+'.csv'))
 	source_folders = release_data.loc[release_data['folder'] == True].astype({'id': 'string', 'parent': 'string'})
 	return create_network_graph(source_folders)
