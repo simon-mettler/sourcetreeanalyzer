@@ -9,11 +9,13 @@ from base64 import b64encode
 from urllib.parse import quote
 
 
+# Gets list of all applications.
 applications = sorted(os.listdir(settings.output_dir))
+
 
 # Page elements
 
-# Application dropdown.
+# Creates options for application dropdown.
 app_dropdown_options = [] 
 
 for app in applications:
@@ -23,6 +25,7 @@ for app in applications:
 	}
 	app_dropdown_options.append(single_option)
 
+# Creates application dropdown element.
 app_dropdown = html.Div(
 	[
 		dbc.Label('Application', html_for='dropdown-application'),
@@ -34,7 +37,7 @@ app_dropdown = html.Div(
 	className = 'mb-3',
 )
 
-# Release dropdown.
+# Creates release dropdown element.
 release_dropdown = html.Div(
 	[
 		dbc.Label('Release', html_for='dropdown-release'),
@@ -46,17 +49,18 @@ release_dropdown = html.Div(
 	className = 'mb-3',
 )
 
-
-
+# Creates submit dropdown element.
 submit_button = dbc.Button(
 	'Submit', id='submit-button', n_clicks = 0
 )
 
 
-
-
 def graph_elements(source_folders):
+	# Returns a dict containing graph nodes and edges from folder structure.
+	# Used to populate cytoscape graph.
+	# Param 'source_folders': dataframe containing folders id, name, parent and num of files.
 
+	# Gets all nodes (folders).
 	node_dict = (
 		source_folders[['id', 'name', 'num_files_direct']]#.astype(str)
 		.fillna(0)
@@ -64,15 +68,15 @@ def graph_elements(source_folders):
 		.to_dict('records')
 	)
 
+	# Gets all edges (parent/child relationship).
 	edge_dict = (
 		source_folders.iloc[:-1][['parent', 'id']]
 		.rename(columns={'parent': 'source', 'id': 'target'})
 		.to_dict('records')
 	)
 
-	# Create nodes and edges.
+	# Adds nodes and edges to graph_elements dict.
 	graph_elements = []
-
 	for node in node_dict:
 		graph_elements.append({'data': node})
 	for edge in edge_dict:
@@ -82,6 +86,8 @@ def graph_elements(source_folders):
 
 
 def create_network_graph(source_folders):
+	# Returns cytoscape network graph als plotly figure element.
+	# Param 'source_folders': dataframe containing folders id, name, parent and num of files.
 
 	num_files_max = source_folders['num_files_direct'].max()
 
@@ -120,13 +126,17 @@ def create_network_graph(source_folders):
 	return fig 
 
 
-# Update release dropdown options based on selected application.
+# Updates release dropdown options based on selected application.
 @callback(
 	Output('dropdown-release', 'options'),
 	Input('dropdown-application', 'value'),
 	prevent_initial_call = True
 )
 def update_release_options(app):
+	# Returns all releases from selected application.
+	# Param 'app': sring, selected application
+
+	# Gets all releases from selected app.
 	releases = pd.read_csv(os.path.join(settings.output_dir, app, 'stats_'+app+'.csv'))
 	releases = releases['release'].unique().tolist()
 	release_dropdown_options = []
@@ -141,6 +151,7 @@ def update_release_options(app):
 	return release_dropdown_options
 
 
+# Updates network graph based on selected app and release.
 @callback(
 	Output('network-graph', 'children'),
 	Input('submit-button', 'n_clicks'),
@@ -149,11 +160,17 @@ def update_release_options(app):
 	prevent_initial_call = True
 )
 def update_graph(n_clicks, app, release):
+	# Returns network graph figure.
+	# Param 'app': string, selected application 
+	# Param 'release': string, selected release
+
 	release_data = pd.read_csv(os.path.join(settings.output_dir, app, 'tree_'+release+'.csv'))
 	source_folders = release_data.loc[release_data['folder'] == True].astype({'id': 'string', 'parent': 'string'})
+
 	return create_network_graph(source_folders)
 
 
+# Creates dash layout.
 layout = dbc.Container([
 	html.H1('', id = 'testtitel'),
 	app_dropdown,
