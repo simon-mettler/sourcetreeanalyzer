@@ -1,0 +1,10 @@
+path,name,extension,size_bytes,mtime,folder,num_files,level,md5,num_files_direct,id,parent
+extra_fonts/binary_to_compressed_c.cpp,binary_to_compressed_c,cpp,10537,2015-04-20 00:56:35,False,,2,91f26158e5776e9cb8edf8f64b8af3e1,,f407d2e18169d56eff4f714adb2eea34,f053cad38974b4b7f9ca5a0250749edc
+extra_fonts,extra_fonts,,10537,2015-04-20 00:56:35,True,1.0,2,,1.0,f053cad38974b4b7f9ca5a0250749edc,5058f1af8388633f609cadb75a75dc9d
+imgui.h,imgui,h,78183,2015-04-20 00:56:35,False,,1,1f2cd7aad1d272c712d60779f969a5e3,,bbaa16f299ca6d388a3a779b16572882,5058f1af8388633f609cadb75a75dc9d
+imgui.cpp,imgui,cpp,484844,2015-04-20 00:56:35,False,,1,e1c600777851678aba4ab4d40da12083,,e5e00627776ba59572e7d1d86554aee6,5058f1af8388633f609cadb75a75dc9d
+stb_textedit.h,stb_textedit,h,46023,2015-04-20 00:56:35,False,,1,74b57ae3d21a35acd568b1a7928fd6e5,,caac62dcf8799c3ef9d8e45b473ab187,5058f1af8388633f609cadb75a75dc9d
+stb_truetype.h,stb_truetype,h,104783,2015-04-20 00:56:35,False,,1,8e2a4d62c6aaf2c03790904ec9094646,,a892b4ae3bef21789604feb2a180d8f2,5058f1af8388633f609cadb75a75dc9d
+stb_rect_pack.h,stb_rect_pack,h,16210,2015-04-20 00:56:35,False,,1,757e72e6b449baee9bbc31039a1e26b2,,e2727fadd4cf46cfebe5f403356ae0d3,5058f1af8388633f609cadb75a75dc9d
+imconfig.h,imconfig,h,2700,2015-04-20 00:56:35,False,,1,604852e9fc2f8802623d83edfb4a7f9f,,79b076193800c82e237264ecbfda3c2a,5058f1af8388633f609cadb75a75dc9d
+.,1.38,,751472,2015-04-20 00:56:35,True,7.0,1,,6.0,5058f1af8388633f609cadb75a75dc9d,

@@ -1,0 +1,5 @@
+path,name,extension,size_bytes,mtime,folder,num_files,level,md5,num_files_direct,id,parent
+src/glances.py,glances,py,20048,2011-12-10 22:55:14,False,,2,543b20aab08153a0e21397af019168fc,,7ac76f80950e1af2786f8f562f7405ec,25d902c24283ab8cfbac54dfa101ad31
+src,src,,20048,2011-12-10 22:55:14,True,1.0,2,,1.0,25d902c24283ab8cfbac54dfa101ad31,5058f1af8388633f609cadb75a75dc9d
+setup.py,setup,py,731,2011-12-10 22:55:14,False,,1,9fcc4b4a97c8a5255d50b32ec959970b,,2eeaed663bd0d25b7e608891384b7298,5058f1af8388633f609cadb75a75dc9d
+.,1.2.0,,28971,2011-12-10 22:55:14,True,2.0,1,,1.0,5058f1af8388633f609cadb75a75dc9d,

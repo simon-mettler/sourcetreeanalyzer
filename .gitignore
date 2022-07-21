@@ -3,6 +3,5 @@ __pycache__
 *.swo
 input/*
 !input/.gitkeep
-output/*
 venv
 

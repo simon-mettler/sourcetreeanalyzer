@@ -32,7 +32,6 @@ for application in applications:
 		'avg_source_folder_size_num_files': [],
 		'avg_source_folder_size_bytes': [],
 		'max_tree_level': [],
-		'avg_tree_level': [],
 		'max_num_files_level': [],
 		'avg_num_files_level': [],
 		'max_num_folders_level': [],
@@ -99,7 +98,7 @@ for application in applications:
 		fs = pd.merge(fs, fs[['hash_id', 'id']], left_on = 'parent', right_on = 'id', how = 'left')
 
 		# Delete unused columns.
-		fs.drop(columns=['id_y','id_x', 'parent', 'uid', 'ctime', 'atime',  'path'], inplace=True)
+		fs.drop(columns=['id_y','id_x', 'parent', 'uid', 'ctime', 'atime'], inplace=True)
 
 		# Rename columns
 		fs.rename(columns = {
@@ -132,11 +131,6 @@ for application in applications:
 
 		# Calculates source folder size (number of files)
 		release_stats['max_source_folder_size_num_files'].append(fs['num_files_direct'].max())
-
-		# Calculates average tree level.
-		levels = fs.loc[ (fs['folder'] == True) & (~fs['id'].isin(fs['parent'])) ] # Gets all folder leaf nodes.
-		avg_tree_level = round(levels['level'].mean(), 4)
-		release_stats['avg_tree_level'].append(avg_tree_level)
 
 		# Gets total number of folders and files.
 		num_files = fs.loc[fs['folder'] == False].shape[0] 		# Total number of files.
@@ -226,13 +220,10 @@ for application in applications:
 	df_release_stats['growth_avg_source_folder_size_bytes_pct'] = pct_growth(df_release_stats['avg_source_folder_size_bytes'])
 	df_release_stats['growth_max_tree_level'] = df_release_stats['max_tree_level'].diff()
 	df_release_stats['growth_max_tree_level_pct'] = pct_growth(df_release_stats['max_tree_level'])
-	df_release_stats['growth_avg_tree_level_pct'] = pct_growth(df_release_stats['avg_tree_level'])
 	df_release_stats['growth_max_num_files_level'] = df_release_stats['max_num_files_level'].diff()
 	df_release_stats['growth_max_num_files_level_pct'] = pct_growth(df_release_stats['max_num_files_level'])
 	df_release_stats['growth_avg_num_files_level_pct'] = pct_growth(df_release_stats['avg_num_files_level'])
-	df_release_stats['growth_tree_depth_pct'] = pct_growth(df_release_stats['avg_tree_level'])
 	df_release_stats['growth_tree_width_pct'] = pct_growth(df_release_stats['avg_num_files_level'])
-	df_release_stats['growth_tree_size_pct'] = pct_growth(df_release_stats['tree_size'])
 
 	# Exports results to csv.
 	df_release_stats.to_csv(
