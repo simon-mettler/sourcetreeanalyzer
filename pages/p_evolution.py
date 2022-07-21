@@ -12,13 +12,16 @@ def to_kb(b):
 	kb = b/1024
 	return round(kb, 0)
 
-# Load statistics from output folder as dataframe.
+
+# Gets all applications
 applications = sorted(os.listdir(settings.output_dir))
 
+# Prepare dict for statistics.
 release_stats = {a:'' for a in applications }
 files_per_level = {a:'' for a in applications } 
 
 
+# Loads statistics and files per level for every application.
 for application in applications:
 
 	files_per_level[application] = pd.read_csv(
@@ -27,25 +30,23 @@ for application in applications:
 	stats = pd.read_csv(
 		os.path.join(settings.output_dir, application, 'stats_'+application+'.csv'))
 
+	# Orders releases by name if necessary.
 	if application in settings.order_by_name:
 		stats.sort_values(by = 'release', inplace = True)
 		stats = stats.reset_index(drop=True)
 
-
+	# Store statistics in release_stats dict.
 	release_stats[application] = stats
+
+	# Converts release size column from bytes to kilobytes.
 	release_stats[application]['release_size_bytes'] = release_stats[application]['release_size_bytes'].apply(to_kb)
 	#release_stats[application]['avg_file_size_bytes'] = release_stats[application]['avg_file_size_bytes'].apply(to_kb)
 
 
-# Stats
-
-# Avg tree size
-#def get_avg_tree_size(data):
-#	return round(data['tree_size'].mean(), 2)
 
 # Page elements
 
-# Application Dropdown
+# Loads application dropdown options.
 app_dropdown_options = [] 
 for app in applications:
 	single_option = {
@@ -54,6 +55,7 @@ for app in applications:
 	}
 	app_dropdown_options.append(single_option)
 
+# Creates application dropdown html element.
 app_dropdown = html.Div(
 	[
 		dbc.Label('Application', html_for='dropdown'),
@@ -67,13 +69,9 @@ app_dropdown = html.Div(
 
 
 
-
-
-
-
 ### Create Graphs
 
-# Global configs.
+# Global graph configs.
 config_graph = {
 	'displaylogo': False,
 	'toImageButtonOptions': {'format': 'png'},
@@ -297,8 +295,6 @@ def update_figure(selected_value):
 			create_fig_size_multiple_yaxis(data_release), 
 			create_fig_total_files(data_release), 
 			create_fig_growth_num_files(data_release),
-			#create_fig_metric_source_folder(data_release), 
-			#create_fig_tree_size(data_release), 
 			create_fig_release_size_bytes(data_release), 
 			create_fig_growth_release_size(data_release),
 			create_fig_files_per_level(data_fpl, selected_value), 
@@ -319,8 +315,6 @@ layout = dbc.Container([
 			dcc.Graph(id='fig-growth-num-files'),
 		], title='Show Growth')
 	],start_collapsed=True)),
-	#dcc.Graph(id='fig-metric-source-folder'),
-	#dcc.Graph(id='fig-tree-size'),
 	dcc.Graph(id='fig-release-size-bytes'), 
 	html.Div(dbc.Accordion([
 		dbc.AccordionItem([

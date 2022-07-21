@@ -40,7 +40,7 @@ app_stats_dict = {
 	#'max_level': [],
 }
 
-# Gets statistics from all applications.
+# Gets statistics of all applications.
 for application in applications:
 
 	# Reads csv and orders releases by name if necessary.
@@ -49,7 +49,7 @@ for application in applications:
 	if application in settings.order_by_name:
 		df.sort_values(by = 'release', inplace = True)
 
-	# Adds values from first and last release to app_stats dict.
+	# Adds values of the first and last release to app_stats dict.
 	app_stats_dict['app'].append(application)
 	app_stats_dict['num_files_first'].append(df.iloc[0]['num_files'])
 	app_stats_dict['num_files_last'].append(df.iloc[-1]['num_files'])
@@ -67,8 +67,8 @@ app_stats_df = pd.DataFrame.from_dict(app_stats_dict)
 
 
 def pct_growth(col1, col2):
-	# Return % growth between values from two columns.
-	# Param col1 col2: values from first and last column.
+	# Return % growth between values of two columns.
+	# Param col1 col2: values of first and last column.
 	return round( ((col2 - col1) / col1 * 100), 0 )
 
 
@@ -126,7 +126,7 @@ data_table_num_files.columns = [
 	'Growth (%)'
 ]
 
-# Creates dash datatable containing number of files from fist an last release.
+# Creates dash datatable containing number of files of the first and last release.
 table_num_files = dash_table.DataTable(
 	data_table_num_files.to_dict('records'),
 	style_as_list_view=True,
@@ -158,7 +158,7 @@ data_table_size.columns = [
 	'Growth (%)'
 ]
 
-# Creates dash datatable containing number of files from fist an last release.
+# Creates dash datatable containing size of the first and last release.
 table_size = dash_table.DataTable(
 	data_table_size.to_dict('records'),
 	style_as_list_view=True,
@@ -173,10 +173,24 @@ table_size = dash_table.DataTable(
 	],
 )
 
-data_table_file_size = app_stats_df[['app', 'avg_file_size_kb_first', 'avg_file_size_kb_last', 'growth_avg_file_size', 'growth_avg_file_size_pct']]
 
-data_table_file_size.columns = ['Application', 'First Release (KB)', 'Latest Release (KB)', 'Growth', 'Growth (%)']
+# Dataframe used to create 'file size' table.
+data_table_file_size = app_stats_df[[
+	'app', 
+	'avg_file_size_kb_first', 
+	'avg_file_size_kb_last', 
+	'growth_avg_file_size', 
+	'growth_avg_file_size_pct'
+]]
+data_table_file_size.columns = [
+	'Application', 
+	'First Release (KB)', 
+	'Latest Release (KB)', 
+	'Growth', 
+	'Growth (%)'
+]
 
+# Creates dash datatable containing average file size of the first and last release.
 table_file_size = dash_table.DataTable(
 	data_table_file_size.to_dict('records'),
 	style_as_list_view=True,
@@ -191,11 +205,24 @@ table_file_size = dash_table.DataTable(
 	],
 )
 
-data_table_max_tree_level = app_stats_df[['app', 'max_tree_level_first', 'max_tree_level_last', 'growth_max_tree_level', 'growth_max_tree_level_pct']]
 
+# Dataframe used to create 'max tree level' table.
+data_table_max_tree_level = app_stats_df[[
+	'app', 
+	'max_tree_level_first', 
+	'max_tree_level_last', 
+	'growth_max_tree_level', 
+	'growth_max_tree_level_pct'
+]]
+data_table_max_tree_level.columns = [
+	'Application', 
+	'First Release', 
+	'Latest Release', 
+	'Growth', 
+	'Growth (%)'
+]
 
-data_table_max_tree_level.columns = ['Application', 'First Release', 'Latest Release', 'Growth', 'Growth (%)']
-
+# Creates dash datatable containing max tree level of the first and last release.
 table_max_tree_level= dash_table.DataTable(
 	data_table_max_tree_level.to_dict('records'),
 	style_as_list_view=True,
@@ -210,10 +237,24 @@ table_max_tree_level= dash_table.DataTable(
 	],
 )
 
-data_table_sourcefolder_size = app_stats_df[['app', 'avg_sourcefolder_size_first', 'avg_sourcefolder_size_last', 'growth_sourcefolder_size', 'growth_sourcefolder_size_pct']]
 
-data_table_sourcefolder_size.columns = ['Application', 'First Release', 'Latest Release', 'Growth', 'Growth (%)']
+# Dataframe used to create 'source folder size' table.
+data_table_sourcefolder_size = app_stats_df[[
+	'app', 
+	'avg_sourcefolder_size_first', 
+	'avg_sourcefolder_size_last', 
+	'growth_sourcefolder_size', 
+	'growth_sourcefolder_size_pct'
+]]
+data_table_sourcefolder_size.columns = [
+	'Application', 
+	'First Release', 
+	'Latest Release', 
+	'Growth', 
+	'Growth (%)'
+]
 
+# Creates dash datatable containing source folder size of the first and last release.
 table_sourcefolder_size = dash_table.DataTable(
 	data_table_sourcefolder_size.to_dict('records'),
 	style_as_list_view=True,
@@ -253,4 +294,3 @@ layout = dbc.Container([
 	table_sourcefolder_size,
 	dcc.Graph(figure=fig_size_file_size),
 ])
-
